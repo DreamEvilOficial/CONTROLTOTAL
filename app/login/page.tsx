@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Lock, Mail, ArrowRight } from 'lucide-react';
+import { Lock, Mail, ArrowRight, CheckSquare, Square, UserPlus, MessageCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +11,27 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Load remember me preference
+    const savedUser = localStorage.getItem('savedUser');
+    if (savedUser) {
+      const { username: savedUsername, password: savedPassword } = JSON.parse(savedUser);
+      setUsername(savedUsername);
+      setPassword(savedPassword);
+      setRememberMe(true);
+    }
+
+    // Load public config
+    fetch('/api/config/public')
+      .then(res => res.json())
+      .then(data => {
+        if (data.whatsappNumber) setWhatsappNumber(data.whatsappNumber);
+      })
+      .catch(console.error);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +53,13 @@ export default function LoginPage() {
 
       // Redirect based on role handled by middleware or manually here
       const role = (data.user as { role: string }).role;
+
+      if (rememberMe) {
+        localStorage.setItem('savedUser', JSON.stringify({ username, password }));
+      } else {
+        localStorage.removeItem('savedUser');
+      }
+
       if (role === 'ADMIN') router.push('/admin');
       else if (role === 'AGENT') router.push('/agent');
       else router.push('/player');
@@ -95,6 +123,21 @@ export default function LoginPage() {
             </div>
           </div>
 
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setRememberMe(!rememberMe)}
+              className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              {rememberMe ? (
+                <CheckSquare className="w-4 h-4 text-primary" />
+              ) : (
+                <Square className="w-4 h-4" />
+              )}
+              Recordarme
+            </button>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
@@ -108,6 +151,28 @@ export default function LoginPage() {
               </>
             )}
           </button>
+
+          <div className="space-y-3 pt-2">
+            <Link 
+              href="/register"
+              className="w-full py-3.5 bg-white/5 border border-white/10 text-white font-bold rounded-xl hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2 group"
+            >
+              <UserPlus className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              Crear mi usuario
+            </Link>
+
+            {whatsappNumber && (
+              <a 
+                href={`https://wa.me/${whatsappNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3.5 bg-[#25D366]/10 border border-[#25D366]/20 text-[#25D366] font-bold rounded-xl hover:bg-[#25D366]/20 hover:border-[#25D366]/30 transition-all flex items-center justify-center gap-2 group"
+              >
+                <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                Contactar Admin
+              </a>
+            )}
+          </div>
         </form>
       </div>
     </div>

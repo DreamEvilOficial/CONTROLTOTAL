@@ -4,6 +4,7 @@ import { useEffect, useState, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut, Wallet, ArrowUpCircle, ArrowDownCircle, History, MessageCircle, CheckCircle, Clock, XCircle, RefreshCw } from 'lucide-react';
 import ChatWindow from '@/components/ChatWindow';
+import SupportChat from '@/components/SupportChat';
 
 export default function PlayerDashboard() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function PlayerDashboard() {
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [amount, setAmount] = useState('');
+  const [withdrawDetails, setWithdrawDetails] = useState({ cvu: '', alias: '', bank: '' });
   const [selectedTx, setSelectedTx] = useState<string | null>(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
 
@@ -257,6 +259,34 @@ export default function PlayerDashboard() {
                 value={amount}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)}
               />
+
+              {showWithdrawModal && (
+                <div className="space-y-4 mb-6">
+                  <p className="text-sm text-gray-400">Datos para recibir la transferencia:</p>
+                  <input
+                    type="text"
+                    placeholder="CVU / CBU"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
+                    value={withdrawDetails.cvu}
+                    onChange={(e) => setWithdrawDetails({...withdrawDetails, cvu: e.target.value})}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Alias"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
+                    value={withdrawDetails.alias}
+                    onChange={(e) => setWithdrawDetails({...withdrawDetails, alias: e.target.value})}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Nombre del Banco / Billetera"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
+                    value={withdrawDetails.bank}
+                    onChange={(e) => setWithdrawDetails({...withdrawDetails, bank: e.target.value})}
+                  />
+                </div>
+              )}
+
               <div className="flex gap-4">
                 <button
                   onClick={() => {
@@ -290,7 +320,7 @@ export default function PlayerDashboard() {
                  <button onClick={() => setSelectedTx(null)} className="text-gray-400 hover:text-white transition-colors">✕</button>
               </div>
               
-              {selectedTransactionData?.expectedAmount && selectedTransactionData.status === 'PENDING' && (
+              {selectedTransactionData?.expectedAmount && selectedTransactionData.status === 'PENDING' && selectedTransactionData.type === 'DEPOSIT' && (
                 <div className="bg-secondary/10 p-4 border-b border-secondary/20 text-sm">
                   <p className="font-bold text-secondary mb-1 flex items-center gap-2">
                     <Clock className="w-4 h-4" />
@@ -298,6 +328,22 @@ export default function PlayerDashboard() {
                   </p>
                   <p className="text-gray-300">Transfiere EXACTAMENTE <span className="text-xl font-bold text-white text-glow mx-1">${selectedTransactionData.expectedAmount.toFixed(2)}</span></p>
                   <p className="text-gray-400 text-xs mt-2">El monto incluye centavos únicos para identificar tu pago. Se acreditará automáticamente en segundos.</p>
+                </div>
+              )}
+
+              {selectedTransactionData?.type === 'WITHDRAW' && selectedTransactionData.status === 'PENDING' && (
+                <div className="bg-yellow-500/10 p-4 border-b border-yellow-500/20 text-sm">
+                  <p className="font-bold text-yellow-500 mb-1 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Solicitud de Retiro en Proceso
+                  </p>
+                  <p className="text-gray-300 mb-2">Tu solicitud ha sido enviada al administrador. Por favor espera la confirmación en el chat.</p>
+                  <div className="bg-black/20 p-2 rounded text-xs text-gray-400 space-y-1">
+                     <p>Monto a recibir: <span className="text-white font-bold">${selectedTransactionData.amount}</span></p>
+                     {selectedTransactionData.withdrawalCvu && <p>CVU: {selectedTransactionData.withdrawalCvu}</p>}
+                     {selectedTransactionData.withdrawalAlias && <p>Alias: {selectedTransactionData.withdrawalAlias}</p>}
+                     {selectedTransactionData.withdrawalBank && <p>Banco: {selectedTransactionData.withdrawalBank}</p>}
+                  </div>
                 </div>
               )}
 
@@ -311,6 +357,8 @@ export default function PlayerDashboard() {
             </div>
           </div>
         )}
+
+        <SupportChat />
       </div>
     </div>
   );

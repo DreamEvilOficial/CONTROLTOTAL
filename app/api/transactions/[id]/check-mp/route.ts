@@ -25,12 +25,22 @@ export async function POST(
       return NextResponse.json({ status: 'COMPLETED' });
     }
 
-    if (!transaction.expectedAmount || !transaction.agent?.mpAccessToken || !transaction.agent.mpEnabled) {
-      return NextResponse.json({ status: transaction.status, message: 'Manual verification required' });
+    // Determine which token to use
+    let accessToken: string | null = null;
+    const systemConfig = await (prisma as any).systemConfig.findUnique({ where: { id: 'config' } });
+
+    if (transaction.agent && transaction.agent.role === 'AGENT' && transaction.agent.mpAccessToken && transaction.agent.mpEnabled) {
+      accessToken = transaction.agent.mpAccessToken;
+    } else if (systemConfig?.mpAccessToken) {
+      accessToken = systemConfig.mpAccessToken;
     }
 
-    // Inicializar MP con el token del agente
-    const client = getMpClient(transaction.agent.mpAccessToken);
+    if (!transaction.expectedAmount || !accessToken) {
+      return NextResponse.json({ status: transaction.status, message: 'Manual verification required (No token configured)' });
+    }
+
+    // Inicializar MP con el token determinado
+    const client = getMpClient(accessToken);
     const payment = new Payment(client);
 
     // Buscar pagos recientes con el monto exacto

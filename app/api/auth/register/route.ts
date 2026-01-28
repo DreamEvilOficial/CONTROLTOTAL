@@ -7,12 +7,13 @@ const registerSchema = z.object({
   name: z.string().min(2),
   username: z.string().min(3),
   password: z.string().min(6),
+  platformId: z.string().optional(),
 });
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, username, password } = registerSchema.parse(body);
+    const { name, username, password, platformId } = registerSchema.parse(body);
 
     const existingUser = await prisma.user.findUnique({
       where: { username },
@@ -25,6 +26,18 @@ export async function POST(request: Request) {
       );
     }
 
+    // Find Admin to assign as manager
+    const adminUser = await prisma.user.findUnique({
+      where: { username: 'admin' },
+    });
+
+    if (!adminUser) {
+      return NextResponse.json(
+        { error: 'Error de sistema: Admin no encontrado' },
+        { status: 500 }
+      );
+    }
+
     const hashedPassword = await hashPassword(password);
 
     const user = await prisma.user.create({
@@ -33,6 +46,8 @@ export async function POST(request: Request) {
         username,
         password: hashedPassword,
         role: 'PLAYER',
+        managerId: adminUser.id,
+        platformId: platformId || undefined,
       },
     });
 

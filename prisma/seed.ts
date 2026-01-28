@@ -20,6 +20,34 @@ async function main() {
   });
 
   console.log({ admin });
+
+  // Initialize System Config
+  const config = await (prisma as any).systemConfig.upsert({
+    where: { id: 'config' },
+    update: {},
+    create: {
+      id: 'config',
+      whatsappNumber: '',
+      mpAccessToken: '',
+      mpPublicKey: '',
+    },
+  });
+
+  console.log({ config });
+
+  // Initialize Default Platform
+  const platform = await (prisma as any).platform.upsert({
+    where: { id: 'default-platform' },
+    update: {},
+    create: {
+      id: 'default-platform',
+      name: 'Plataforma Principal',
+      bonus: '100%',
+      active: true,
+    },
+  });
+  
+  console.log({ platform });
 }
 
 main()

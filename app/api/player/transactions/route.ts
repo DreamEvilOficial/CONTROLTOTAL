@@ -40,7 +40,13 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { amount, type } = transactionSchema.parse(body);
+    const { amount, type, withdrawalCvu, withdrawalAlias, withdrawalBank } = z.object({
+      amount: z.number().positive(),
+      type: z.enum(['DEPOSIT', 'WITHDRAW']),
+      withdrawalCvu: z.string().optional(),
+      withdrawalAlias: z.string().optional(),
+      withdrawalBank: z.string().optional(),
+    }).parse(body);
 
     const user = await prisma.user.findUnique({
       where: { id: playerPayload.id as string },
@@ -77,7 +83,10 @@ export async function POST(request: Request) {
         userId: user.id,
         agentId: user.managerId,
         status: 'PENDING',
-      },
+        withdrawalCvu,
+        withdrawalAlias,
+        withdrawalBank,
+      } as any,
     });
 
     return NextResponse.json(transaction);

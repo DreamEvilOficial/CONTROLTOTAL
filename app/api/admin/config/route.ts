@@ -1,59 +1,60 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyJWT } from '@/lib/jwt';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
 
-import { cookies } from 'next/headers';
-
 const configSchema = z.object({
-  metaAccessToken: z.string().optional(),
-  metaAdAccountId: z.string().optional(),
+  whatsappNumber: z.string().optional().nullable(),
+  mpAccessToken: z.string().optional().nullable(),
+  mpPublicKey: z.string().optional().nullable(),
 });
 
-export async function GET(req: Request) {
-  try {
-    const token = cookies().get('token')?.value;
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function checkAdmin() {
+  const token = cookies().get('token')?.value;
+  if (!token) return false;
+  const payload = await verifyJWT(token);
+  return payload?.role === 'ADMIN';
+}
 
-    const decoded = await verifyJWT(token);
-    if (!decoded || decoded.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    const admin = await prisma.user.findUnique({
-      where: { id: decoded.id as string },
-      select: { metaAccessToken: true, metaAdAccountId: true },
-    });
-
-    return NextResponse.json(admin);
-  } catch (error: any) {
-    return NextResponse.json({ error: 'Error fetching config' }, { status: 500 });
+export async function GET() {
+  if (!(await checkAdmin())) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  let config = await prisma.systemConfig.findUnique({
+    where: { id: 'config' },
+  });
+
+  if (!config) {
+    config = await prisma.systemConfig.create({
+      data: { id: 'config' },
+    });
+  }
+
+  return NextResponse.json(config);
 }
 
 export async function PUT(req: Request) {
+  if (!(await checkAdmin())) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
-    const token = cookies().get('token')?.value;
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const decoded = await verifyJWT(token);
-    if (!decoded || decoded.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
     const body = await req.json();
-    const { metaAccessToken, metaAdAccountId } = configSchema.parse(body);
+    const data = configSchema.parse(body);
 
-    const updatedAdmin = await prisma.user.update({
-      where: { id: decoded.id as string },
-      data: {
-        metaAccessToken,
-        metaAdAccountId,
+    const config = await prisma.systemConfig.upsert({
+      where: { id: 'config' },
+      update: data,
+      create: {
+        id: 'config',
+        ...data,
       },
     });
 
-    return NextResponse.json(updatedAdmin);
-  } catch (error: any) {
-    return NextResponse.json({ error: 'Error updating config' }, { status: 500 });
+    return NextResponse.json(config);
+  } catch (error) {
+    return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
   }
 }

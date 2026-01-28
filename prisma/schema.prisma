@@ -40,8 +40,30 @@ model User {
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
 
+  platformId String?
+  platform   Platform? @relation(fields: [platformId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model SystemConfig {
+  id              String   @id @default("config")
+  whatsappNumber  String?
+  mpAccessToken   String?
+  mpPublicKey     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Platform {
+  id          String   @id @default(uuid())
+  name        String
+  bonus       String
+  active      Boolean  @default(true)
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Transaction {
@@ -53,6 +75,11 @@ model Transaction {
   
   // MercadoPago Info
   mpPaymentId String?
+
+  // Withdrawal Info
+  withdrawalCvu   String?
+  withdrawalAlias String?
+  withdrawalBank  String?
 
   userId    String
   user      User     @relation("UserTransactions", fields: [userId], references: [id])
@@ -78,6 +105,7 @@ model Message {
   transactionId String?
   transaction   Transaction? @relation(fields: [transactionId], references: [id])
 
+  read          Boolean  @default(false)
   createdAt     DateTime @default(now())
 }
 

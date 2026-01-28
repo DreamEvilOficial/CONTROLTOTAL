@@ -15,7 +15,16 @@ import {
   Calendar,
   Clock,
   TrendingUp,
-  UserPlus
+  UserPlus,
+  Settings,
+  Gamepad2,
+  Trash2,
+  Plus,
+  Save,
+  MessageCircle,
+  Send,
+  X,
+  RefreshCw
 } from 'lucide-react';
 
 interface Transaction {
@@ -28,6 +37,23 @@ interface Transaction {
     username: string;
     name: string;
   };
+  withdrawalCvu?: string;
+  withdrawalAlias?: string;
+  withdrawalBank?: string;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  sender: { username: string; role: string };
+  createdAt: string;
+  read: boolean;
+}
+
+interface Conversation {
+  user: { id: string; username: string; role: string };
+  lastMessage: { content: string };
+  unreadCount: number;
 }
 
 interface ActivityStats {
@@ -50,6 +76,19 @@ interface Cvu {
   active: boolean;
 }
 
+interface Config {
+  whatsappNumber: string;
+  mpAccessToken: string;
+  mpPublicKey: string;
+}
+
+interface Platform {
+  id: string;
+  name: string;
+  bonus: string;
+  active: boolean;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
@@ -57,20 +96,91 @@ export default function AdminDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [activity, setActivity] = useState<ActivityData | null>(null);
   const [cvus, setCvus] = useState<Cvu[]>([]);
+  const [config, setConfig] = useState<Config>({ whatsappNumber: '', mpAccessToken: '', mpPublicKey: '' });
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
   
   // Forms
   const [newCvu, setNewCvu] = useState({ bankName: '', alias: '', cbu: '' });
+  const [newPlatform, setNewPlatform] = useState({ name: '', bonus: '' });
+
+  // Chat state
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedChatUser, setSelectedChatUser] = useState<{ id: string; username: string } | null>(null);
+  const [adminMessages, setAdminMessages] = useState<Message[]>([]);
+  const [adminNewMessage, setAdminNewMessage] = useState('');
 
   // Loading states
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [checkingPayment, setCheckingPayment] = useState<string | null>(null);
+  const [savingConfig, setSavingConfig] = useState(false);
 
   useEffect(() => {
     fetchStats();
     fetchTransactions();
     fetchActivity();
     fetchCvus();
-  }, []);
+    fetchConfig();
+    fetchPlatforms();
+    fetchConversations();
+    
+    // Poll for chat updates every 3 seconds
+    const interval = setInterval(() => {
+      fetchConversations();
+      if (selectedChatUser) {
+        fetchAdminMessages(selectedChatUser.id);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [selectedChatUser]);
+
+  const fetchConversations = async () => {
+    try {
+      const res = await fetch('/api/chat');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) setConversations(data);
+      }
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+    }
+  };
+
+  const fetchAdminMessages = async (userId: string) => {
+    try {
+      const res = await fetch(`/api/chat?userId=${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAdminMessages(data);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
+
+  const sendAdminMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminNewMessage.trim() || !selectedChatUser) return;
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: adminNewMessage,
+          receiverId: selectedChatUser.id,
+        }),
+      });
+
+      if (res.ok) {
+        setAdminNewMessage('');
+        fetchAdminMessages(selectedChatUser.id);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -108,6 +218,31 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchConfig = async () => {
+    try {
+      const res = await fetch('/api/admin/config');
+      if (res.ok) {
+        const data = await res.json();
+        setConfig({
+          whatsappNumber: data.whatsappNumber || '',
+          mpAccessToken: data.mpAccessToken || '',
+          mpPublicKey: data.mpPublicKey || '',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching config:', error);
+    }
+  };
+
+  const fetchPlatforms = async () => {
+    try {
+      const res = await fetch('/api/admin/platforms');
+      if (res.ok) setPlatforms(await res.json());
+    } catch (error) {
+      console.error('Error fetching platforms:', error);
+    }
+  };
+
   const handleTransactionAction = async (id: string, action: 'COMPLETED' | 'REJECTED') => {
     setActionLoading(id);
     try {
@@ -126,6 +261,29 @@ export default function AdminDashboard() {
       console.error('Error updating transaction:', error);
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const checkPayment = async (txId: string) => {
+    setCheckingPayment(txId);
+    try {
+      const res = await fetch(`/api/transactions/${txId}/check-mp`, { method: 'POST' });
+      const data = await res.json();
+      
+      if (data.status === 'COMPLETED') {
+        alert('¡Pago verificado y aprobado automáticamente!');
+        fetchTransactions();
+        fetchStats();
+      } else if (data.message) {
+        alert(`Estado: ${data.message}`);
+      } else {
+        alert('Pago no encontrado o aún pendiente en MercadoPago.');
+      }
+    } catch (error) {
+      console.error('Error checking payment:', error);
+      alert('Error al verificar el pago');
+    } finally {
+      setCheckingPayment(null);
     }
   };
 
@@ -158,6 +316,54 @@ export default function AdminDashboard() {
       if (res.ok) fetchCvus();
     } catch (error) {
       console.error('Error deleting cvu:', error);
+    }
+  };
+
+  const saveConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingConfig(true);
+    try {
+      await fetch('/api/admin/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      });
+    } catch (error) {
+      console.error('Error saving config:', error);
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
+  const createPlatform = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/platforms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPlatform),
+      });
+      if (res.ok) {
+        setNewPlatform({ name: '', bonus: '' });
+        fetchPlatforms();
+      }
+    } catch (error) {
+      console.error('Error creating platform:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deletePlatform = async (id: string) => {
+    if (!confirm('¿Estás seguro de eliminar esta plataforma?')) return;
+    try {
+      const res = await fetch(`/api/admin/platforms?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) fetchPlatforms();
+    } catch (error) {
+      console.error('Error deleting platform:', error);
     }
   };
 
@@ -223,7 +429,7 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 p-1 bg-white/5 rounded-xl w-fit">
+        <div className="flex items-center gap-2 p-1 bg-white/5 rounded-xl w-fit flex-wrap">
           <button
             onClick={() => setActiveTab('overview')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
@@ -245,6 +451,39 @@ export default function AdminDashboard() {
           >
             <CreditCard className="w-4 h-4" />
             CVUs / Pagos
+          </button>
+          <button
+            onClick={() => setActiveTab('config')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+              activeTab === 'config' 
+                ? 'bg-primary text-black shadow-lg shadow-primary/20' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+            Configuración
+          </button>
+          <button
+            onClick={() => setActiveTab('platforms')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+              activeTab === 'platforms' 
+                ? 'bg-primary text-black shadow-lg shadow-primary/20' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Gamepad2 className="w-4 h-4" />
+            Plataformas
+          </button>
+          <button
+            onClick={() => setActiveTab('support')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+              activeTab === 'support' 
+                ? 'bg-primary text-black shadow-lg shadow-primary/20' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <MessageCircle className="w-4 h-4" />
+            Soporte
           </button>
         </div>
 
@@ -301,8 +540,8 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-green-400 bg-green-400/5 w-fit px-2 py-1 rounded-full">
-                  <Activity className="w-3 h-3" />
-                  Transacciones completadas
+                  <TrendingUp className="w-3 h-3" />
+                  Histórico
                 </div>
               </div>
             </div>
@@ -352,10 +591,28 @@ export default function AdminDashboard() {
                               <p className="text-sm text-gray-400">
                                 Usuario: <span className="text-white font-medium">{tx.user.username}</span>
                               </p>
+                              {tx.type === 'WITHDRAW' && (
+                                <div className="mt-2 text-xs bg-black/20 p-2 rounded text-gray-400 border border-white/5">
+                                  {tx.withdrawalCvu && <p>CVU: <span className="text-white select-all">{tx.withdrawalCvu}</span></p>}
+                                  {tx.withdrawalAlias && <p>Alias: <span className="text-white select-all">{tx.withdrawalAlias}</span></p>}
+                                  {tx.withdrawalBank && <p>Banco: <span className="text-white select-all">{tx.withdrawalBank}</span></p>}
+                                </div>
+                              )}
                             </div>
                           </div>
                           
                           <div className="flex items-center gap-3 w-full md:w-auto">
+                            {tx.type === 'DEPOSIT' && (
+                              <button
+                                onClick={() => checkPayment(tx.id)}
+                                disabled={checkingPayment === tx.id || actionLoading === tx.id}
+                                className="flex-1 md:flex-none px-4 py-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                                title="Verificar en MercadoPago"
+                              >
+                                <RefreshCw className={`w-4 h-4 ${checkingPayment === tx.id ? 'animate-spin' : ''}`} />
+                                <span className="hidden md:inline">Verificar MP</span>
+                              </button>
+                            )}
                             <button
                               onClick={() => handleTransactionAction(tx.id, 'REJECTED')}
                               disabled={actionLoading === tx.id}
@@ -416,74 +673,320 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'cvus' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-             {/* CVU Management Section (kept from original) */}
-             <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-               <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                 <CreditCard className="w-5 h-5 text-primary" />
-                 Gestión de Métodos de Pago
-               </h3>
-               
-               <form onSubmit={createCvu} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                 <input
-                   type="text"
-                   placeholder="Banco / Billetera"
-                   className="p-3 bg-black/20 border border-white/10 rounded-xl text-white focus:border-primary/50 outline-none"
-                   value={newCvu.bankName}
-                   onChange={(e) => setNewCvu({...newCvu, bankName: e.target.value})}
-                   required
-                 />
-                 <input
-                   type="text"
-                   placeholder="Alias"
-                   className="p-3 bg-black/20 border border-white/10 rounded-xl text-white focus:border-primary/50 outline-none"
-                   value={newCvu.alias}
-                   onChange={(e) => setNewCvu({...newCvu, alias: e.target.value})}
-                   required
-                 />
-                 <input
-                   type="text"
-                   placeholder="CBU / CVU"
-                   className="p-3 bg-black/20 border border-white/10 rounded-xl text-white focus:border-primary/50 outline-none"
-                   value={newCvu.cbu}
-                   onChange={(e) => setNewCvu({...newCvu, cbu: e.target.value})}
-                   required
-                 />
-                 <button
-                   type="submit"
-                   disabled={loading}
-                   className="bg-primary text-black font-bold py-3 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50"
-                 >
-                   {loading ? 'Agregando...' : 'Agregar CVU'}
-                 </button>
-               </form>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Create CVU Form */}
+            <div className="bg-white/5 rounded-2xl p-6 border border-white/10 h-fit">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Plus className="w-5 h-5 text-primary" />
+                Agregar Nuevo CVU
+              </h3>
+              <form onSubmit={createCvu} className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Banco / Billetera</label>
+                  <input
+                    type="text"
+                    required
+                    value={newCvu.bankName}
+                    onChange={(e) => setNewCvu({...newCvu, bankName: e.target.value})}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    placeholder="Ej: MercadoPago, Brubank"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Alias</label>
+                  <input
+                    type="text"
+                    required
+                    value={newCvu.alias}
+                    onChange={(e) => setNewCvu({...newCvu, alias: e.target.value})}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    placeholder="mi.alias.mp"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">CBU / CVU</label>
+                  <input
+                    type="text"
+                    required
+                    value={newCvu.cbu}
+                    onChange={(e) => setNewCvu({...newCvu, cbu: e.target.value})}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    placeholder="0000000000000000000000"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary text-black font-bold py-3 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Guardando...' : 'Guardar CVU'}
+                </button>
+              </form>
+            </div>
 
-               <div className="space-y-3">
-                 {cvus.map((cvu) => (
-                   <div key={cvu.id} className="flex items-center justify-between p-4 bg-black/20 rounded-xl border border-white/5">
-                     <div className="flex items-center gap-4">
-                       <div className="p-3 bg-white/5 rounded-lg">
-                         <Banknote className="w-6 h-6 text-gray-400" />
-                       </div>
-                       <div>
-                         <h4 className="font-bold">{cvu.bankName}</h4>
-                         <p className="text-sm text-gray-400 font-mono">{cvu.cbu}</p>
-                         <p className="text-xs text-primary">{cvu.alias}</p>
-                       </div>
-                     </div>
-                     <button
-                       onClick={() => deleteCvu(cvu.id)}
-                       className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                     >
-                       <LogOut className="w-5 h-5 rotate-180" />
-                     </button>
-                   </div>
-                 ))}
-                 {cvus.length === 0 && (
-                   <p className="text-center text-gray-500 py-4">No hay métodos de pago configurados</p>
-                 )}
-               </div>
-             </div>
+            {/* CVU List */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-primary" />
+                CVUs Activos
+              </h3>
+              {cvus.map((cvu) => (
+                <div key={cvu.id} className="bg-white/5 rounded-xl p-5 border border-white/10 flex justify-between items-center group">
+                  <div>
+                    <h4 className="font-bold text-lg">{cvu.bankName}</h4>
+                    <p className="text-gray-400 text-sm font-mono mt-1">Alias: <span className="text-white">{cvu.alias}</span></p>
+                    <p className="text-gray-400 text-sm font-mono">CBU: <span className="text-white">{cvu.cbu}</span></p>
+                  </div>
+                  <button
+                    onClick={() => deleteCvu(cvu.id)}
+                    className="p-2 rounded-lg bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/20"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+              {cvus.length === 0 && (
+                <p className="text-gray-500 text-center py-8">No hay CVUs registrados</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'config' && (
+          <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Settings className="w-5 h-5 text-primary" />
+                Configuración del Sistema
+              </h3>
+              <form onSubmit={saveConfig} className="space-y-6">
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Número de WhatsApp (con código de país)</label>
+                  <input
+                    type="text"
+                    value={config.whatsappNumber}
+                    onChange={(e) => setConfig({...config, whatsappNumber: e.target.value})}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    placeholder="Ej: 5491112345678"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Este número se usará para el botón de contacto en el login.</p>
+                </div>
+
+                <div className="border-t border-white/10 pt-6">
+                  <h4 className="text-lg font-bold mb-4 text-primary">MercadoPago</h4>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm text-gray-400 mb-1 block">Access Token</label>
+                      <input
+                        type="password"
+                        value={config.mpAccessToken}
+                        onChange={(e) => setConfig({...config, mpAccessToken: e.target.value})}
+                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                        placeholder="APP_USR-..."
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-400 mb-1 block">Public Key</label>
+                      <input
+                        type="text"
+                        value={config.mpPublicKey}
+                        onChange={(e) => setConfig({...config, mpPublicKey: e.target.value})}
+                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                        placeholder="APP_USR-..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={savingConfig}
+                  className="w-full bg-primary text-black font-bold py-3 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Save className="w-5 h-5" />
+                  {savingConfig ? 'Guardando...' : 'Guardar Configuración'}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'platforms' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Create Platform Form */}
+            <div className="bg-white/5 rounded-2xl p-6 border border-white/10 h-fit">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Plus className="w-5 h-5 text-primary" />
+                Agregar Plataforma
+              </h3>
+              <form onSubmit={createPlatform} className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Nombre de la Plataforma</label>
+                  <input
+                    type="text"
+                    required
+                    value={newPlatform.name}
+                    onChange={(e) => setNewPlatform({...newPlatform, name: e.target.value})}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    placeholder="Ej: Casino Royal"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Bono de Bienvenida</label>
+                  <textarea
+                    required
+                    value={newPlatform.bonus}
+                    onChange={(e) => setNewPlatform({...newPlatform, bonus: e.target.value})}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none min-h-[100px]"
+                    placeholder="Ej: 100% hasta $50.000 + 50 Giros Gratis"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary text-black font-bold py-3 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Creando...' : 'Crear Plataforma'}
+                </button>
+              </form>
+            </div>
+
+            {/* Platform List */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Gamepad2 className="w-5 h-5 text-primary" />
+                Plataformas Disponibles
+              </h3>
+              {platforms.map((platform) => (
+                <div key={platform.id} className="bg-white/5 rounded-xl p-5 border border-white/10 flex justify-between items-start group">
+                  <div>
+                    <h4 className="font-bold text-lg">{platform.name}</h4>
+                    <p className="text-gray-400 text-sm mt-2">{platform.bonus}</p>
+                    <span className="inline-block mt-3 px-2 py-1 rounded text-xs font-bold bg-green-500/10 text-green-500">
+                      ACTIVA
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => deletePlatform(platform.id)}
+                    className="p-2 rounded-lg bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/20"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+              {platforms.length === 0 && (
+                <p className="text-gray-500 text-center py-8">No hay plataformas registradas</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'support' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+            {/* Conversations List */}
+            <div className="lg:col-span-1 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden flex flex-col">
+              <div className="p-4 border-b border-white/10 bg-white/5">
+                <h3 className="font-bold text-white flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" />
+                  Conversaciones
+                </h3>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {conversations.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    No hay conversaciones activas
+                  </div>
+                ) : (
+                  conversations.map((conv) => (
+                    <button
+                      key={conv.user.id}
+                      onClick={() => {
+                        setSelectedChatUser(conv.user);
+                        fetchAdminMessages(conv.user.id);
+                      }}
+                      className={`w-full p-4 border-b border-white/5 text-left transition-colors hover:bg-white/5 flex items-start gap-3 ${
+                        selectedChatUser?.id === conv.user.id ? 'bg-white/10' : ''
+                      }`}
+                    >
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">
+                        {conv.user.username.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-bold text-white truncate">{conv.user.username}</span>
+                          {conv.unreadCount > 0 && (
+                            <span className="bg-primary text-black text-xs font-bold px-2 py-0.5 rounded-full">
+                              {conv.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-400 truncate">{conv.lastMessage.content}</p>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Chat Window */}
+            <div className="lg:col-span-2 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden flex flex-col">
+              {selectedChatUser ? (
+                <>
+                  <div className="p-4 border-b border-white/10 bg-white/5 flex justify-between items-center">
+                    <h3 className="font-bold text-white flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs">
+                        {selectedChatUser.username.substring(0, 2).toUpperCase()}
+                      </div>
+                      {selectedChatUser.username}
+                    </h3>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {adminMessages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`flex ${msg.sender.role === 'ADMIN' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[80%] p-3 rounded-2xl ${
+                            msg.sender.role === 'ADMIN'
+                              ? 'bg-primary text-black rounded-tr-none'
+                              : 'bg-white/10 text-white rounded-tl-none'
+                          }`}
+                        >
+                          <p className="text-sm">{msg.content}</p>
+                          <span className="text-[10px] opacity-50 block mt-1">
+                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <form onSubmit={sendAdminMessage} className="p-4 border-t border-white/10 bg-white/5 flex gap-2">
+                    <input
+                      type="text"
+                      value={adminNewMessage}
+                      onChange={(e) => setAdminNewMessage(e.target.value)}
+                      placeholder="Escribe un mensaje..."
+                      className="flex-1 bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:border-primary/50 outline-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!adminNewMessage.trim()}
+                      className="p-3 bg-primary text-black rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Send className="w-5 h-5" />
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
+                  <MessageCircle className="w-16 h-16 mb-4 opacity-20" />
+                  <p>Selecciona una conversación para comenzar</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
