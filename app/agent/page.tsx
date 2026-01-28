@@ -9,7 +9,7 @@ export default function AgentDashboard() {
   interface Player {
     id: string;
     name: string;
-    email: string;
+    username: string;
     balance: number;
   }
 
@@ -20,7 +20,7 @@ export default function AgentDashboard() {
     status: string;
     user: {
       name: string;
-      email: string;
+      username: string;
     };
     createdAt: string;
   }
@@ -107,7 +107,7 @@ export default function AgentDashboard() {
       body: JSON.stringify(newPlayer),
     });
     if (res.ok) {
-      setNewPlayer({ name: '', email: '', password: '' });
+      setNewPlayer({ name: '', username: '', password: '' });
       fetchPlayers();
       fetchStats();
     }
@@ -209,11 +209,11 @@ export default function AgentDashboard() {
                   required
                 />
                 <input
-                  type="email"
-                  placeholder="Email"
+                  type="text"
+                  placeholder="Usuario"
                   className="w-full p-2 border rounded"
-                  value={newPlayer.email}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPlayer({...newPlayer, email: e.target.value})}
+                  value={newPlayer.username}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPlayer({...newPlayer, username: e.target.value})}
                   required
                 />
                 <input

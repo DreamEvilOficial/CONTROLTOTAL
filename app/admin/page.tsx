@@ -91,7 +91,7 @@ export default function AdminDashboard() {
         body: JSON.stringify(newAgent),
       });
       if (res.ok) {
-        setNewAgent({ name: '', email: '', password: '' });
+        setNewAgent({ name: '', username: '', password: '' });
         fetchAgents();
         fetchStats();
       }
