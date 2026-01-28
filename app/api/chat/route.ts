@@ -143,3 +143,34 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
   }
 }
+
+export async function DELETE(req: Request) {
+  const user = await getUser();
+  if (!user || user.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const targetUserId = searchParams.get('userId');
+
+  if (!targetUserId) {
+    return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+  }
+
+  try {
+    await prisma.message.deleteMany({
+      where: {
+        OR: [
+          { senderId: user.id, receiverId: targetUserId },
+          { senderId: targetUserId, receiverId: user.id },
+        ],
+        transactionId: null,
+      },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting conversation:', error);
+    return NextResponse.json({ error: 'Error deleting conversation' }, { status: 500 });
+  }
+}

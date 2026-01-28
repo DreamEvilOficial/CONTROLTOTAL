@@ -17,6 +17,18 @@ export default function PlayerDashboard() {
   const [withdrawDetails, setWithdrawDetails] = useState({ cvu: '', alias: '', bank: '' });
   const [selectedTx, setSelectedTx] = useState<string | null>(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
+  
+  // Payment Method State
+  const [paymentMethod, setPaymentMethod] = useState<'TRANSFER' | 'MP'>('TRANSFER');
+  const [mpLink, setMpLink] = useState<string | null>(null);
+  const [loadingMp, setLoadingMp] = useState(false);
+
+  useEffect(() => {
+    if (selectedTx) {
+      setPaymentMethod('TRANSFER');
+      setMpLink(null);
+    }
+  }, [selectedTx]);
 
   useEffect(() => {
     fetchStats();
@@ -47,6 +59,26 @@ export default function PlayerDashboard() {
       if (res.ok) setActiveCvus(await res.json());
     } catch (error) {
       console.error('Error fetching CVUs:', error);
+    }
+  };
+
+  const handleCreatePreference = async () => {
+    if (!selectedTx) return;
+    setLoadingMp(true);
+    try {
+      const res = await fetch(`/api/transactions/${selectedTx}/preference`, { method: 'POST' });
+      const data = await res.json();
+      if (data.init_point) {
+        setMpLink(data.init_point);
+        window.open(data.init_point, '_blank');
+      } else {
+        alert('Error generando link de pago: ' + (data.error || 'Desconocido'));
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error de conexión');
+    } finally {
+      setLoadingMp(false);
     }
   };
 
@@ -336,59 +368,131 @@ export default function PlayerDashboard() {
                 <div className="p-6 overflow-y-auto border-r border-white/10 bg-black/20 space-y-6">
                   {selectedTransactionData?.type === 'DEPOSIT' && selectedTransactionData.status === 'PENDING' && (
                     <>
-                      <div className="bg-secondary/10 p-6 rounded-xl border border-secondary/20">
-                        <p className="font-bold text-secondary mb-2 flex items-center gap-2 text-lg">
-                          <Clock className="w-5 h-5" />
-                          Instrucciones de Pago
-                        </p>
-                        <p className="text-gray-300 text-lg">Transfiere EXACTAMENTE:</p>
-                        <p className="text-4xl font-black text-white text-glow my-3 tracking-tight">
-                          ${selectedTransactionData.expectedAmount ? selectedTransactionData.expectedAmount.toFixed(2) : selectedTransactionData.amount.toLocaleString()}
-                        </p>
-                        <p className="text-gray-400 text-sm">
-                          El monto incluye centavos únicos para identificar tu pago. Se acreditará automáticamente en segundos.
-                        </p>
+                      {/* Payment Method Selector */}
+                      <div className="flex bg-white/5 p-1 rounded-xl mb-6">
+                        <button
+                          onClick={() => setPaymentMethod('TRANSFER')}
+                          className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                            paymentMethod === 'TRANSFER' 
+                              ? 'bg-primary text-black shadow-lg shadow-primary/20' 
+                              : 'text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          Transferencia
+                        </button>
+                        <button
+                          onClick={() => setPaymentMethod('MP')}
+                          className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                            paymentMethod === 'MP' 
+                              ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' 
+                              : 'text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          MercadoPago
+                        </button>
                       </div>
 
-                      <div className="space-y-4">
-                        <h4 className="text-white font-bold flex items-center gap-2">
-                          <Wallet className="w-4 h-4 text-primary" />
-                          Cuentas Disponibles para Transferir
-                        </h4>
-                        {activeCvus.length > 0 ? (
-                          activeCvus.map((cvu: any) => (
-                            <div key={cvu.id} className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-3 hover:bg-white/10 transition-colors">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="p-2 rounded-lg bg-primary/20 text-primary">
-                                  <Wallet className="w-4 h-4" />
-                                </div>
-                                <span className="font-bold text-white">{cvu.bankName}</span>
-                              </div>
-                              
-                              <div className="space-y-2 text-sm">
-                                {cvu.holderName && (
-                                  <div className="flex justify-between items-center py-1 border-b border-white/5">
-                                    <span className="text-gray-400">Titular:</span>
-                                    <span className="text-white font-mono select-all text-right">{cvu.holderName}</span>
-                                  </div>
-                                )}
-                                <div className="flex justify-between items-center py-1 border-b border-white/5">
-                                  <span className="text-gray-400">CBU/CVU:</span>
-                                  <span className="text-white font-mono select-all text-right">{cvu.cbu}</span>
-                                </div>
-                                <div className="flex justify-between items-center py-1">
-                                  <span className="text-gray-400">Alias:</span>
-                                  <span className="text-white font-mono select-all text-right">{cvu.alias}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-center p-4 bg-white/5 rounded-xl border border-dashed border-white/10 text-gray-500">
-                            No hay cuentas activas disponibles. Consulta por el chat.
+                      {paymentMethod === 'TRANSFER' ? (
+                        <>
+                          <div className="bg-secondary/10 p-6 rounded-xl border border-secondary/20">
+                            <p className="font-bold text-secondary mb-2 flex items-center gap-2 text-lg">
+                              <Clock className="w-5 h-5" />
+                              Instrucciones de Pago
+                            </p>
+                            <p className="text-gray-300 text-lg">Transfiere EXACTAMENTE:</p>
+                            <p className="text-4xl font-black text-white text-glow my-3 tracking-tight">
+                              ${selectedTransactionData.expectedAmount ? selectedTransactionData.expectedAmount.toFixed(2) : selectedTransactionData.amount.toLocaleString()}
+                            </p>
+                            <p className="text-gray-400 text-sm">
+                              El monto incluye centavos únicos para identificar tu pago. Se acreditará automáticamente en segundos.
+                            </p>
                           </div>
-                        )}
-                      </div>
+    
+                          <div className="space-y-4">
+                            <h4 className="text-white font-bold flex items-center gap-2">
+                              <Wallet className="w-4 h-4 text-primary" />
+                              Cuentas Disponibles para Transferir
+                            </h4>
+                            {activeCvus.length > 0 ? (
+                              activeCvus.map((cvu: any) => (
+                                <div key={cvu.id} className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-3 hover:bg-white/10 transition-colors">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className="p-2 rounded-lg bg-primary/20 text-primary">
+                                      <Wallet className="w-4 h-4" />
+                                    </div>
+                                    <span className="font-bold text-white">{cvu.bankName}</span>
+                                  </div>
+                                  
+                                  <div className="space-y-2 text-sm">
+                                    {cvu.holderName && (
+                                      <div className="flex justify-between items-center py-1 border-b border-white/5">
+                                        <span className="text-gray-400">Titular:</span>
+                                        <span className="text-white font-mono select-all text-right">{cvu.holderName}</span>
+                                      </div>
+                                    )}
+                                    <div className="flex justify-between items-center py-1 border-b border-white/5">
+                                      <span className="text-gray-400">CBU/CVU:</span>
+                                      <span className="text-white font-mono select-all text-right">{cvu.cbu}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center py-1">
+                                      <span className="text-gray-400">Alias:</span>
+                                      <span className="text-white font-mono select-all text-right">{cvu.alias}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-center p-4 bg-white/5 rounded-xl border border-dashed border-white/10 text-gray-500">
+                                No hay cuentas activas disponibles. Consulta por el chat.
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="space-y-6 text-center">
+                            <div className="bg-blue-500/10 p-8 rounded-xl border border-blue-500/20">
+                               <h4 className="text-xl font-bold text-blue-400 mb-4">Pagar con MercadoPago</h4>
+                               <p className="text-gray-300 mb-6">
+                                 Haz clic en el botón para abrir la pasarela de pago segura de MercadoPago.
+                                 El pago se acreditará automáticamente.
+                               </p>
+                               
+                               {!mpLink ? (
+                                  <button 
+                                    onClick={handleCreatePreference}
+                                    disabled={loadingMp}
+                                    className="w-full py-4 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2"
+                                  >
+                                    {loadingMp ? (
+                                      <>
+                                        <RefreshCw className="w-5 h-5 animate-spin" />
+                                        Generando link...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Wallet className="w-5 h-5" />
+                                        Generar Link de Pago
+                                      </>
+                                    )}
+                                  </button>
+                               ) : (
+                                  <div className="space-y-4">
+                                     <a 
+                                       href={mpLink}
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       className="block w-full py-4 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+                                     >
+                                        Pagar Ahora
+                                     </a>
+                                     <p className="text-xs text-gray-500">
+                                       Si no se abrió automáticamente, haz clic arriba.
+                                     </p>
+                                  </div>
+                               )}
+                            </div>
+                        </div>
+                      )}
                     </>
                   )}
 

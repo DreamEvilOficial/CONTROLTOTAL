@@ -8,6 +8,7 @@ import {
   BarChart3, 
   LogOut, 
   Shield, 
+  Search,
   Banknote, 
   Activity,
   CheckCircle2,
@@ -16,6 +17,7 @@ import {
   Clock,
   TrendingUp,
   UserPlus,
+  Trash2,
   Settings,
   Gamepad2,
   Trash2,
@@ -179,6 +181,20 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('Error sending message:', error);
+    }
+  };
+
+  const deleteConversation = async (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('¿Borrar esta conversación?')) return;
+    try {
+      const res = await fetch(`/api/chat?userId=${userId}`, { method: 'DELETE' });
+      if (res.ok) {
+        if (selectedChatUser?.id === userId) setSelectedChatUser(null);
+        fetchConversations();
+      }
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
     }
   };
 
@@ -927,11 +943,20 @@ export default function AdminDashboard() {
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center mb-1">
                           <span className="font-bold text-white truncate">{conv.user.username}</span>
-                          {conv.unreadCount > 0 && (
-                            <span className="bg-primary text-black text-xs font-bold px-2 py-0.5 rounded-full">
-                              {conv.unreadCount}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {conv.unreadCount > 0 && (
+                              <span className="bg-primary text-black text-xs font-bold px-2 py-0.5 rounded-full">
+                                {conv.unreadCount}
+                              </span>
+                            )}
+                            <button
+                              onClick={(e) => deleteConversation(conv.user.id, e)}
+                              className="text-gray-500 hover:text-red-500 transition-colors p-1"
+                              title="Borrar conversación"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                         <p className="text-sm text-gray-400 truncate">{conv.lastMessage.content}</p>
                       </div>
