@@ -43,38 +43,5 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const admin = await getAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  try {
-    const body = await request.json();
-    const { name, username, password } = agentSchema.parse(body);
-
-    const existingUser = await prisma.user.findUnique({
-      where: { username },
-    });
-
-    if (existingUser) {
-      return NextResponse.json({ error: 'Usuario ya registrado' }, { status: 400 });
-    }
-
-    const hashedPassword = await hashPassword(password);
-
-    const agent = await prisma.user.create({
-      data: {
-        name,
-        username,
-        password: hashedPassword,
-        role: 'AGENT',
-        managerId: admin.id as string,
-      },
-    });
-
-    const { password: _, ...agentWithoutPassword } = agent;
-    return NextResponse.json(agentWithoutPassword);
-  } catch (error: any) {
-    return NextResponse.json({ error: 'Error creando agente' }, { status: 400 });
-  }
+  return NextResponse.json({ error: 'Creation of agents is disabled' }, { status: 403 });
 }

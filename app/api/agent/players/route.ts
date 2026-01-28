@@ -60,13 +60,22 @@ export async function POST(request: Request) {
 
     const hashedPassword = await hashPassword(password);
 
+    // Always assign to 'admin' user
+    const adminUser = await prisma.user.findUnique({
+      where: { username: 'admin' },
+    });
+
+    if (!adminUser) {
+      return NextResponse.json({ error: 'Admin user not found' }, { status: 500 });
+    }
+
     const player = await prisma.user.create({
       data: {
         name,
         username,
         password: hashedPassword,
         role: 'PLAYER',
-        managerId: agent.id as string,
+        managerId: adminUser.id,
       },
     });
 

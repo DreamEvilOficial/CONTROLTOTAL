@@ -1,29 +1,45 @@
 'use client';
 
-import React, { useEffect, useState, ChangeEvent, FormEvent } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Users, 
   CreditCard, 
   BarChart3, 
   LogOut, 
-  Plus, 
   Shield, 
-  UserPlus, 
   Banknote, 
   Activity,
-  Trash2,
-  ToggleLeft,
-  ToggleRight
+  CheckCircle2,
+  XCircle,
+  Calendar,
+  Clock,
+  TrendingUp,
+  UserPlus
 } from 'lucide-react';
 
-interface Agent {
+interface Transaction {
   id: string;
-  name: string;
-  username: string;
-  _count?: {
-    users: number;
+  type: string;
+  amount: number;
+  status: string;
+  createdAt: string;
+  user: {
+    username: string;
+    name: string;
   };
+}
+
+interface ActivityStats {
+  newUsers: number;
+  volume: number;
+  transactionCount: number;
+}
+
+interface ActivityData {
+  day: ActivityStats;
+  week: ActivityStats;
+  month: ActivityStats;
 }
 
 interface Cvu {
@@ -38,19 +54,21 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState({ totalUsers: 0, totalAgents: 0, totalVolume: 0 });
-  const [agents, setAgents] = useState<Agent[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [activity, setActivity] = useState<ActivityData | null>(null);
   const [cvus, setCvus] = useState<Cvu[]>([]);
   
   // Forms
-  const [newAgent, setNewAgent] = useState({ name: '', username: '', password: '' });
   const [newCvu, setNewCvu] = useState({ bankName: '', alias: '', cbu: '' });
 
   // Loading states
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStats();
-    fetchAgents();
+    fetchTransactions();
+    fetchActivity();
     fetchCvus();
   }, []);
 
@@ -63,12 +81,21 @@ export default function AdminDashboard() {
     }
   };
 
-  const fetchAgents = async () => {
+  const fetchTransactions = async () => {
     try {
-      const res = await fetch('/api/admin/agents');
-      if (res.ok) setAgents(await res.json());
+      const res = await fetch('/api/admin/transactions');
+      if (res.ok) setTransactions(await res.json());
     } catch (error) {
-      console.error('Error fetching agents:', error);
+      console.error('Error fetching transactions:', error);
+    }
+  };
+
+  const fetchActivity = async () => {
+    try {
+      const res = await fetch('/api/admin/activity');
+      if (res.ok) setActivity(await res.json());
+    } catch (error) {
+      console.error('Error fetching activity:', error);
     }
   };
 
@@ -81,28 +108,28 @@ export default function AdminDashboard() {
     }
   };
 
-  const createAgent = async (e: FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleTransactionAction = async (id: string, action: 'COMPLETED' | 'REJECTED') => {
+    setActionLoading(id);
     try {
-      const res = await fetch('/api/admin/agents', {
-        method: 'POST',
+      const res = await fetch(`/api/transactions/${id}/status`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newAgent),
+        body: JSON.stringify({ status: action }),
       });
+      
       if (res.ok) {
-        setNewAgent({ name: '', username: '', password: '' });
-        fetchAgents();
+        fetchTransactions();
         fetchStats();
+        fetchActivity();
       }
     } catch (error) {
-      console.error('Error creating agent:', error);
+      console.error('Error updating transaction:', error);
     } finally {
-      setLoading(false);
+      setActionLoading(null);
     }
   };
 
-  const createCvu = async (e: FormEvent) => {
+  const createCvu = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
@@ -116,324 +143,349 @@ export default function AdminDashboard() {
         fetchCvus();
       }
     } catch (error) {
-      console.error('Error creating CVU:', error);
+      console.error('Error creating cvu:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleCvu = async (id: string, active: boolean) => {
+  const deleteCvu = async (id: string) => {
+    if (!confirm('¿Estás seguro de eliminar este CVU?')) return;
     try {
-      await fetch('/api/admin/cvus', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, active: !active }),
+      const res = await fetch(`/api/admin/cvus?id=${id}`, {
+        method: 'DELETE',
       });
-      fetchCvus();
+      if (res.ok) fetchCvus();
     } catch (error) {
-      console.error('Error toggling CVU:', error);
+      console.error('Error deleting cvu:', error);
     }
   };
 
   const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/login');
   };
 
-  return (
-    <div className="min-h-screen bg-background text-foreground p-4 md:p-8 relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute top-0 left-0 w-full h-full bg-[url('/noise.png')] opacity-5 pointer-events-none"></div>
-      <div className="absolute top-1/4 -right-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-1/4 -left-20 w-80 h-80 bg-secondary/5 rounded-full blur-3xl animate-pulse delay-700"></div>
+  const ActivityCard = ({ title, data, icon: Icon }: { title: string, data: ActivityStats, icon: any }) => (
+    <div className="bg-black/20 rounded-xl p-4 border border-white/5">
+      <div className="flex items-center gap-2 mb-3 text-gray-400">
+        <Icon className="w-4 h-4" />
+        <span className="text-sm font-medium">{title}</span>
+      </div>
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-500">Usuarios Nuevos</span>
+          <span className="text-white font-bold flex items-center gap-1">
+            <UserPlus className="w-3 h-3 text-primary" />
+            {data.newUsers}
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-500">Volumen</span>
+          <span className="text-white font-bold flex items-center gap-1">
+            <Banknote className="w-3 h-3 text-green-500" />
+            ${data.volume.toLocaleString()}
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-500">Transacciones</span>
+          <span className="text-white font-bold flex items-center gap-1">
+            <Activity className="w-3 h-3 text-blue-500" />
+            {data.transactionCount}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 
-      <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
-          <div>
-            <h1 className="text-4xl font-black text-white tracking-tight flex items-center gap-3">
-              <Shield className="w-10 h-10 text-primary" />
-              Panel Admin
-            </h1>
-            <p className="text-gray-400 mt-1">Gestión global de la plataforma</p>
+  return (
+    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-primary/30">
+      {/* Navbar */}
+      <nav className="border-b border-white/10 bg-black/40 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Shield className="w-8 h-8 text-primary" />
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">Panel Admin</h1>
+              <p className="text-xs text-gray-400">Gestión global de la plataforma</p>
+            </div>
           </div>
+          
           <button 
-            onClick={handleLogout} 
-            className="flex items-center gap-2 px-5 py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all"
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all text-sm font-medium"
           >
             <LogOut className="w-4 h-4" />
             Cerrar Sesión
           </button>
         </div>
+      </nav>
 
-        {/* Tabs */}
-        <div className="flex p-1 bg-black/40 backdrop-blur-md rounded-xl border border-white/10 w-full md:w-fit mb-8 overflow-x-auto">
-          {[
-            { id: 'overview', label: 'Resumen', icon: BarChart3 },
-            { id: 'agents', label: 'Agentes', icon: Users },
-            { id: 'cvus', label: 'CVUs / Pagos', icon: CreditCard },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  activeTab === tab.id 
-                    ? 'bg-primary text-black shadow-lg shadow-primary/20' 
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {tab.label}
-              </button>
-            );
-          })}
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Navigation Tabs */}
+        <div className="flex items-center gap-2 p-1 bg-white/5 rounded-xl w-fit">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+              activeTab === 'overview' 
+                ? 'bg-primary text-black shadow-lg shadow-primary/20' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4" />
+            Resumen
+          </button>
+          <button
+            onClick={() => setActiveTab('cvus')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+              activeTab === 'cvus' 
+                ? 'bg-primary text-black shadow-lg shadow-primary/20' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <CreditCard className="w-4 h-4" />
+            CVUs / Pagos
+          </button>
         </div>
 
-        {/* Content */}
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          
-          {/* OVERVIEW TAB */}
-          {activeTab === 'overview' && (
+        {activeTab === 'overview' && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="glass p-6 rounded-2xl relative overflow-hidden group hover:border-primary/30 transition-colors">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Users className="w-24 h-24 text-primary" />
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 hover:border-primary/30 transition-all group">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="text-gray-400 text-sm font-medium mb-1">Total Jugadores</p>
+                    <h3 className="text-4xl font-black text-white tracking-tight group-hover:text-primary transition-colors">
+                      {stats.totalUsers}
+                    </h3>
+                  </div>
+                  <div className="p-3 rounded-xl bg-primary/10 text-primary group-hover:scale-110 transition-transform">
+                    <Users className="w-6 h-6" />
+                  </div>
                 </div>
-                <h3 className="text-gray-400 text-sm font-medium mb-1">Total Jugadores</h3>
-                <p className="text-4xl font-black text-white">{stats.totalUsers}</p>
-                <div className="mt-4 text-xs text-primary flex items-center gap-1">
-                  <Activity className="w-3 h-3" /> Activos en plataforma
+                <div className="flex items-center gap-2 text-xs text-primary bg-primary/5 w-fit px-2 py-1 rounded-full">
+                  <Activity className="w-3 h-3" />
+                  Activos en plataforma
                 </div>
               </div>
 
-              <div className="glass p-6 rounded-2xl relative overflow-hidden group hover:border-secondary/30 transition-colors">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Shield className="w-24 h-24 text-secondary" />
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 hover:border-primary/30 transition-all group">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="text-gray-400 text-sm font-medium mb-1">Total Agentes</p>
+                    <h3 className="text-4xl font-black text-white tracking-tight group-hover:text-yellow-400 transition-colors">
+                      {stats.totalAgents}
+                    </h3>
+                  </div>
+                  <div className="p-3 rounded-xl bg-yellow-500/10 text-yellow-400 group-hover:scale-110 transition-transform">
+                    <Shield className="w-6 h-6" />
+                  </div>
                 </div>
-                <h3 className="text-gray-400 text-sm font-medium mb-1">Total Agentes</h3>
-                <p className="text-4xl font-black text-white">{stats.totalAgents}</p>
-                <div className="mt-4 text-xs text-secondary flex items-center gap-1">
-                  <Activity className="w-3 h-3" /> Gestionando red
+                <div className="flex items-center gap-2 text-xs text-yellow-400 bg-yellow-400/5 w-fit px-2 py-1 rounded-full">
+                  <Activity className="w-3 h-3" />
+                  Gestionando red
                 </div>
               </div>
 
-              <div className="glass p-6 rounded-2xl relative overflow-hidden group hover:border-primary/30 transition-colors">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Banknote className="w-24 h-24 text-primary" />
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 hover:border-primary/30 transition-all group">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="text-gray-400 text-sm font-medium mb-1">Volumen Total</p>
+                    <h3 className="text-4xl font-black text-white tracking-tight group-hover:text-green-400 transition-colors">
+                      ${stats.totalVolume.toLocaleString()}
+                    </h3>
+                  </div>
+                  <div className="p-3 rounded-xl bg-green-500/10 text-green-400 group-hover:scale-110 transition-transform">
+                    <Banknote className="w-6 h-6" />
+                  </div>
                 </div>
-                <h3 className="text-gray-400 text-sm font-medium mb-1">Volumen Total</h3>
-                <p className="text-4xl font-black text-white">${stats.totalVolume.toLocaleString()}</p>
-                <div className="mt-4 text-xs text-primary flex items-center gap-1">
-                  <Activity className="w-3 h-3" /> Transacciones completadas
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* AGENTS TAB */}
-          {activeTab === 'agents' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Create Agent Form */}
-              <div className="glass p-8 rounded-2xl border-primary/20">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <UserPlus className="w-5 h-5 text-primary" />
-                  </div>
-                  <h2 className="text-xl font-bold text-white">Crear Nuevo Agente</h2>
-                </div>
-                
-                <form onSubmit={createAgent} className="space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Nombre</label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all outline-none"
-                      value={newAgent.name}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setNewAgent({...newAgent, name: e.target.value})}
-                      required
-                      placeholder="Nombre del Agente"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Usuario</label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all outline-none"
-                      value={newAgent.username}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setNewAgent({...newAgent, username: e.target.value})}
-                      required
-                      placeholder="nombredeusuario"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Contraseña</label>
-                    <input
-                      type="password"
-                      className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all outline-none"
-                      value={newAgent.password}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setNewAgent({...newAgent, password: e.target.value})}
-                      required
-                      placeholder="••••••••"
-                    />
-                  </div>
-                  
-                  <button 
-                    type="submit" 
-                    disabled={loading}
-                    className="w-full py-3.5 bg-primary text-black font-bold rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50 mt-4 flex items-center justify-center gap-2"
-                  >
-                    {loading ? 'Creando...' : <><Plus className="w-5 h-5" /> Crear Agente</>}
-                  </button>
-                </form>
-              </div>
-
-              {/* Agents List */}
-              <div className="glass p-8 rounded-2xl">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
-                    <Users className="w-5 h-5 text-secondary" />
-                  </div>
-                  <h2 className="text-xl font-bold text-white">Lista de Agentes</h2>
-                </div>
-
-                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                  {agents.length === 0 ? (
-                    <div className="text-center py-10 text-gray-500">
-                      No hay agentes registrados
-                    </div>
-                  ) : (
-                    agents.map((agent) => (
-                      <div key={agent.id} className="bg-black/20 border border-white/5 p-4 rounded-xl flex justify-between items-center hover:bg-white/5 transition-colors">
-                        <div>
-                          <div className="font-bold text-white flex items-center gap-2">
-                            {agent.name}
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/20">Agente</span>
-                          </div>
-                          <div className="text-sm text-gray-400">{agent.username}</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xs text-gray-500 uppercase tracking-wider">Jugadores</div>
-                          <div className="font-mono text-xl text-secondary">{agent._count?.users || 0}</div>
-                        </div>
-                      </div>
-                    ))
-                  )}
+                <div className="flex items-center gap-2 text-xs text-green-400 bg-green-400/5 w-fit px-2 py-1 rounded-full">
+                  <Activity className="w-3 h-3" />
+                  Transacciones completadas
                 </div>
               </div>
             </div>
-          )}
 
-          {/* CVUS TAB */}
-          {activeTab === 'cvus' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Create CVU Form */}
-              <div className="glass p-8 rounded-2xl border-secondary/20">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
-                    <Plus className="w-5 h-5 text-secondary" />
-                  </div>
-                  <h2 className="text-xl font-bold text-white">Agregar Método de Pago</h2>
-                </div>
-                
-                <form onSubmit={createCvu} className="space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Banco / Billetera</label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:border-secondary/50 focus:ring-1 focus:ring-secondary/50 transition-all outline-none"
-                      value={newCvu.bankName}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setNewCvu({...newCvu, bankName: e.target.value})}
-                      required
-                      placeholder="Ej: MercadoPago, Banco Galicia"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Alias</label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:border-secondary/50 focus:ring-1 focus:ring-secondary/50 transition-all outline-none"
-                      value={newCvu.alias}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setNewCvu({...newCvu, alias: e.target.value})}
-                      required
-                      placeholder="mi.alias.mp"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">CBU / CVU</label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:border-secondary/50 focus:ring-1 focus:ring-secondary/50 transition-all outline-none"
-                      value={newCvu.cbu}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setNewCvu({...newCvu, cbu: e.target.value})}
-                      required
-                      placeholder="0000000000000000000000"
-                    />
-                  </div>
-                  
-                  <button 
-                    type="submit" 
-                    disabled={loading}
-                    className="w-full py-3.5 bg-secondary text-black font-bold rounded-xl hover:bg-secondary/90 transition-all disabled:opacity-50 mt-4 flex items-center justify-center gap-2"
-                  >
-                     {loading ? 'Guardando...' : <><Plus className="w-5 h-5" /> Agregar Método</>}
-                  </button>
-                </form>
-              </div>
-
-              {/* CVUs List */}
-              <div className="glass p-8 rounded-2xl">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <CreditCard className="w-5 h-5 text-primary" />
-                  </div>
-                  <h2 className="text-xl font-bold text-white">Métodos Activos</h2>
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Column: Transactions */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <Clock className="w-6 h-6 text-primary" />
+                    Peticiones Pendientes
+                  </h2>
+                  <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-bold">
+                    {transactions.length}
+                  </span>
                 </div>
 
                 <div className="space-y-4">
-                  {cvus.length === 0 ? (
-                    <div className="text-center py-10 text-gray-500">
-                      No hay métodos de pago configurados
+                  {transactions.length === 0 ? (
+                    <div className="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                      <CheckCircle2 className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                      <p className="text-gray-400">No hay transacciones pendientes</p>
                     </div>
                   ) : (
-                    cvus.map((cvu) => (
-                      <div key={cvu.id} className="bg-black/20 border border-white/5 p-4 rounded-xl flex justify-between items-center hover:bg-white/5 transition-colors">
-                        <div>
-                          <div className="font-bold text-white">{cvu.bankName}</div>
-                          <div className="text-sm text-gray-400 font-mono">{cvu.alias}</div>
-                          <div className="text-xs text-gray-500 font-mono mt-1">{cvu.cbu}</div>
+                    transactions.map((tx) => (
+                      <div key={tx.id} className="bg-white/5 rounded-xl p-5 border border-white/5 hover:border-primary/20 transition-all">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                          <div className="flex items-start gap-4">
+                            <div className={`p-3 rounded-full ${
+                              tx.type === 'DEPOSIT' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                            }`}>
+                              {tx.type === 'DEPOSIT' ? <TrendingUp className="w-5 h-5" /> : <Banknote className="w-5 h-5" />}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded uppercase ${
+                                  tx.type === 'DEPOSIT' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                                }`}>
+                                  {tx.type === 'DEPOSIT' ? 'Depósito' : 'Retiro'}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {new Date(tx.createdAt).toLocaleString()}
+                                </span>
+                              </div>
+                              <h4 className="font-bold text-lg">${tx.amount.toLocaleString()}</h4>
+                              <p className="text-sm text-gray-400">
+                                Usuario: <span className="text-white font-medium">{tx.user.username}</span>
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-3 w-full md:w-auto">
+                            <button
+                              onClick={() => handleTransactionAction(tx.id, 'REJECTED')}
+                              disabled={actionLoading === tx.id}
+                              className="flex-1 md:flex-none px-4 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                            >
+                              <XCircle className="w-4 h-4" />
+                              Rechazar
+                            </button>
+                            <button
+                              onClick={() => handleTransactionAction(tx.id, 'COMPLETED')}
+                              disabled={actionLoading === tx.id}
+                              className="flex-1 md:flex-none px-4 py-2 rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500/20 font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              Aprobar
+                            </button>
+                          </div>
                         </div>
-                        <button
-                          onClick={() => toggleCvu(cvu.id, cvu.active)}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                            cvu.active 
-                              ? 'bg-green-500/20 text-green-400 border border-green-500/20 hover:bg-green-500/30' 
-                              : 'bg-red-500/20 text-red-400 border border-red-500/20 hover:bg-red-500/30'
-                          }`}
-                        >
-                          {cvu.active ? (
-                            <><ToggleRight className="w-4 h-4" /> Activo</>
-                          ) : (
-                            <><ToggleLeft className="w-4 h-4" /> Inactivo</>
-                          )}
-                        </button>
                       </div>
                     ))
                   )}
                 </div>
               </div>
+
+              {/* Right Column: Activity History */}
+              <div className="lg:col-span-1 space-y-6">
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Activity className="w-6 h-6 text-primary" />
+                  Historial
+                </h2>
+                
+                <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-6 sticky top-24">
+                  {activity ? (
+                    <>
+                      <ActivityCard 
+                        title="Hoy" 
+                        data={activity.day} 
+                        icon={Clock} 
+                      />
+                      <ActivityCard 
+                        title="Esta Semana" 
+                        data={activity.week} 
+                        icon={Calendar} 
+                      />
+                      <ActivityCard 
+                        title="Este Mes" 
+                        data={activity.month} 
+                        icon={BarChart3} 
+                      />
+                    </>
+                  ) : (
+                    <div className="text-center text-gray-500 py-8">Cargando actividad...</div>
+                  )}
+                </div>
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {activeTab === 'cvus' && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+             {/* CVU Management Section (kept from original) */}
+             <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+               <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                 <CreditCard className="w-5 h-5 text-primary" />
+                 Gestión de Métodos de Pago
+               </h3>
+               
+               <form onSubmit={createCvu} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                 <input
+                   type="text"
+                   placeholder="Banco / Billetera"
+                   className="p-3 bg-black/20 border border-white/10 rounded-xl text-white focus:border-primary/50 outline-none"
+                   value={newCvu.bankName}
+                   onChange={(e) => setNewCvu({...newCvu, bankName: e.target.value})}
+                   required
+                 />
+                 <input
+                   type="text"
+                   placeholder="Alias"
+                   className="p-3 bg-black/20 border border-white/10 rounded-xl text-white focus:border-primary/50 outline-none"
+                   value={newCvu.alias}
+                   onChange={(e) => setNewCvu({...newCvu, alias: e.target.value})}
+                   required
+                 />
+                 <input
+                   type="text"
+                   placeholder="CBU / CVU"
+                   className="p-3 bg-black/20 border border-white/10 rounded-xl text-white focus:border-primary/50 outline-none"
+                   value={newCvu.cbu}
+                   onChange={(e) => setNewCvu({...newCvu, cbu: e.target.value})}
+                   required
+                 />
+                 <button
+                   type="submit"
+                   disabled={loading}
+                   className="bg-primary text-black font-bold py-3 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50"
+                 >
+                   {loading ? 'Agregando...' : 'Agregar CVU'}
+                 </button>
+               </form>
+
+               <div className="space-y-3">
+                 {cvus.map((cvu) => (
+                   <div key={cvu.id} className="flex items-center justify-between p-4 bg-black/20 rounded-xl border border-white/5">
+                     <div className="flex items-center gap-4">
+                       <div className="p-3 bg-white/5 rounded-lg">
+                         <Banknote className="w-6 h-6 text-gray-400" />
+                       </div>
+                       <div>
+                         <h4 className="font-bold">{cvu.bankName}</h4>
+                         <p className="text-sm text-gray-400 font-mono">{cvu.cbu}</p>
+                         <p className="text-xs text-primary">{cvu.alias}</p>
+                       </div>
+                     </div>
+                     <button
+                       onClick={() => deleteCvu(cvu.id)}
+                       className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                     >
+                       <LogOut className="w-5 h-5 rotate-180" />
+                     </button>
+                   </div>
+                 ))}
+                 {cvus.length === 0 && (
+                   <p className="text-center text-gray-500 py-4">No hay métodos de pago configurados</p>
+                 )}
+               </div>
+             </div>
+          </div>
+        )}
       </div>
     </div>
   );
