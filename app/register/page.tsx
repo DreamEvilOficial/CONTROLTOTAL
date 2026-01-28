@@ -94,17 +94,17 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-300 ml-1">Email</label>
+            <label className="text-sm font-medium text-gray-300 ml-1">Usuario</label>
             <div className="relative group">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-primary transition-colors" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-primary transition-colors" />
               <input
-                name="email"
-                type="email"
+                name="username"
+                type="text"
                 required
                 className="w-full pl-10 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                value={formData.email}
+                value={formData.username}
                 onChange={handleChange}
-                placeholder="juan@ejemplo.com"
+                placeholder="juanperez123"
               />
             </div>
           </div>

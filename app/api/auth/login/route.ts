@@ -6,17 +6,17 @@ import { z } from 'zod';
 import { cookies } from 'next/headers';
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  username: z.string().min(1),
   password: z.string().min(1),
 });
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password } = loginSchema.parse(body);
+    const { username, password } = loginSchema.parse(body);
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { username },
     });
 
     if (!user || !(await comparePassword(password, user.password))) {
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
     const token = await signJWT({
       id: user.id,
-      email: user.email,
+      username: user.username,
       role: user.role as 'ADMIN' | 'AGENT' | 'PLAYER',
       name: user.name,
     });

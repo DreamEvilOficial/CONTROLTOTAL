@@ -5,7 +5,7 @@ const key = new TextEncoder().encode(SECRET_KEY);
 
 export interface JWTPayload {
   id: string;
-  email: string;
+  username: string;
   role: 'ADMIN' | 'AGENT' | 'PLAYER';
   [key: string]: any;
 }

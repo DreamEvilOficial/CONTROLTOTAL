@@ -66,16 +66,16 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300 ml-1">Email</label>
+            <label className="text-sm font-medium text-gray-300 ml-1">Usuario</label>
             <div className="relative group">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-primary transition-colors" />
               <input
-                type="email"
+                type="text"
                 required
                 className="w-full pl-10 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                placeholder="ejemplo@casino.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="juanperez123"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
           </div>

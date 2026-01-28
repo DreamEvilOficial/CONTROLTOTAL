@@ -57,7 +57,7 @@ export async function POST(
       // TRANSACCIÓN ENCONTRADA Y APROBADA
       
       // Usar transacción de prisma para asegurar atomicidad
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: any) => {
         // Actualizar transacción
         await tx.transaction.update({
           where: { id: transaction.id },
