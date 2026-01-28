@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Enums replaced with String for SQLite compatibility
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("PLAYER")
+  balance   Float    @default(0)
+  
+  // Agent specific config
+  mpAccessToken String? // MercadoPago Access Token
+  mpEnabled     Boolean @default(false)
+  
+  // Admin specific config
+  metaAccessToken String?
+  metaAdAccountId String?
+
+  // Relations
+  managerId String?  
+  manager   User?    @relation("ManagerToUser", fields: [managerId], references: [id])
+  users     User[]   @relation("ManagerToUser")
+
+  transactions      Transaction[] @relation("UserTransactions") 
+  managedTransactions Transaction[] @relation("AgentTransactions") 
+
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transaction {
+  id        String            @id @default(uuid())
+  amount    Float
+  expectedAmount Float?       // Monto con decimales para identificación MP
+  type      String
+  status    String            @default("PENDING")
+  
+  // MercadoPago Info
+  mpPaymentId String?
+
+  userId    String
+  user      User     @relation("UserTransactions", fields: [userId], references: [id])
+  
+  agentId   String?
+  agent     User?    @relation("AgentTransactions", fields: [agentId], references: [id])
+  
+  messages  Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Message {
+  id            String   @id @default(uuid())
+  content       String
+  senderId      String
+  sender        User     @relation("SentMessages", fields: [senderId], references: [id])
+  
+  receiverId    String
+  receiver      User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  transactionId String?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+
+  createdAt     DateTime @default(now())
+}
+
+model Cvu {
+  id        String   @id @default(uuid())
+  bankName  String
+  alias     String
+  cbu       String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
