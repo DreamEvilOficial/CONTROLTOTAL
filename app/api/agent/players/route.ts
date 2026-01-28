@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 const playerSchema = z.object({
   name: z.string().min(2),
-  email: z.string().email(),
+  username: z.string().min(3),
   password: z.string().min(6),
 });
 
@@ -30,7 +30,7 @@ export async function GET() {
     select: {
       id: true,
       name: true,
-      email: true,
+      username: true,
       balance: true,
       createdAt: true,
     },
@@ -48,14 +48,14 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { name, email, password } = playerSchema.parse(body);
+    const { name, username, password } = playerSchema.parse(body);
 
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { username },
     });
 
     if (existingUser) {
-      return NextResponse.json({ error: 'Email ya registrado' }, { status: 400 });
+      return NextResponse.json({ error: 'Usuario ya registrado' }, { status: 400 });
     }
 
     const hashedPassword = await hashPassword(password);
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     const player = await prisma.user.create({
       data: {
         name,
-        email,
+        username,
         password: hashedPassword,
         role: 'PLAYER',
         managerId: agent.id as string,

@@ -20,7 +20,7 @@ export async function GET() {
   const transactions = await prisma.transaction.findMany({
     where: { agentId: agent.id as string },
     include: {
-      user: { select: { name: true, email: true } },
+      user: { select: { name: true, username: true } },
     },
     orderBy: { createdAt: 'desc' },
   });

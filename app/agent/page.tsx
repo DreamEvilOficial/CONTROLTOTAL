@@ -38,7 +38,7 @@ export default function AgentDashboard() {
   const [selectedTx, setSelectedTx] = useState<string | null>(null);
   
   // Forms
-  const [newPlayer, setNewPlayer] = useState({ name: '', email: '', password: '' });
+  const [newPlayer, setNewPlayer] = useState({ name: '', username: '', password: '' });
   
   // MP Config
   const [mpConfig, setMpConfig] = useState<MpConfig>({ mpAccessToken: '', mpEnabled: false });
@@ -239,7 +239,7 @@ export default function AgentDashboard() {
                       <span className="font-semibold">{player.name}</span>
                       <span className="text-green-600 font-bold">${player.balance.toLocaleString()}</span>
                     </div>
-                    <div className="text-sm text-gray-500">{player.email}</div>
+                    <div className="text-sm text-gray-500">{player.username}</div>
                   </div>
                 ))}
                 {players.length === 0 && (

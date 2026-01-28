@@ -20,7 +20,7 @@ import {
 interface Agent {
   id: string;
   name: string;
-  email: string;
+  username: string;
   _count?: {
     users: number;
   };
@@ -42,7 +42,7 @@ export default function AdminDashboard() {
   const [cvus, setCvus] = useState<Cvu[]>([]);
   
   // Forms
-  const [newAgent, setNewAgent] = useState({ name: '', email: '', password: '' });
+  const [newAgent, setNewAgent] = useState({ name: '', username: '', password: '' });
   const [newCvu, setNewCvu] = useState({ bankName: '', alias: '', cbu: '' });
 
   // Loading states
@@ -262,14 +262,14 @@ export default function AdminDashboard() {
                   </div>
                   
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Email</label>
+                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Usuario</label>
                     <input
-                      type="email"
+                      type="text"
                       className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all outline-none"
-                      value={newAgent.email}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setNewAgent({...newAgent, email: e.target.value})}
+                      value={newAgent.username}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setNewAgent({...newAgent, username: e.target.value})}
                       required
-                      placeholder="agente@casino.com"
+                      placeholder="nombredeusuario"
                     />
                   </div>
                   
@@ -317,7 +317,7 @@ export default function AdminDashboard() {
                             {agent.name}
                             <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/20">Agente</span>
                           </div>
-                          <div className="text-sm text-gray-400">{agent.email}</div>
+                          <div className="text-sm text-gray-400">{agent.username}</div>
                         </div>
                         <div className="text-right">
                           <div className="text-xs text-gray-500 uppercase tracking-wider">Jugadores</div>

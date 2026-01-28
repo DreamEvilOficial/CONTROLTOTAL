@@ -9,7 +9,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
+    username: '',
     password: '',
     confirmPassword: '',
     role: 'PLAYER',
@@ -37,7 +37,7 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formData.name,
-          email: formData.email,
+          username: formData.username,
           password: formData.password,
         }),
       });
@@ -82,6 +82,15 @@ export default function RegisterPage() {
             <div className="relative group">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-primary transition-colors" />
               <input
+                name="username"
+                type="text"
+                required
+                className="w-full pl-10 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="juanperez123"
+              />
+            </div>
                 name="name"
                 type="text"
                 required

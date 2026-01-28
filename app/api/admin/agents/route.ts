@@ -28,7 +28,7 @@ export async function GET() {
     select: {
       id: true,
       name: true,
-      email: true,
+      username: true,
       balance: true,
       createdAt: true,
       _count: {
@@ -47,14 +47,14 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { name, email, password } = agentSchema.parse(body);
+    const { name, username, password } = agentSchema.parse(body);
 
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { username },
     });
 
     if (existingUser) {
-      return NextResponse.json({ error: 'Email ya registrado' }, { status: 400 });
+      return NextResponse.json({ error: 'Usuario ya registrado' }, { status: 400 });
     }
 
     const hashedPassword = await hashPassword(password);
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     const agent = await prisma.user.create({
       data: {
         name,
-        email,
+        username,
         password: hashedPassword,
         role: 'AGENT',
       },
