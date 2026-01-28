@@ -110,3 +110,45 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
   }
 }
+
+export async function DELETE(request: Request) {
+  if (!(await checkAdmin())) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+
+  if (!id) {
+    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+  }
+
+  try {
+    // Delete related data first if needed (transactions, messages, etc.)
+    // For now, let's assume we want to keep transactions but maybe nullify the user?
+    // Or simpler: cascade delete is usually handled by DB, but Prisma needs explicit delete if not configured.
+    // Given the constraints, let's delete the user.
+    // Warning: this will fail if there are foreign key constraints without cascade.
+    // Let's delete transactions first manually to be safe or rely on cascade if set.
+    // The schema doesn't show onDelete: Cascade. So we should delete related records.
+    
+    await prisma.transaction.deleteMany({ where: { userId: id } });
+    
+    // Delete messages where user is sender or receiver
+    await prisma.message.deleteMany({ 
+      where: { 
+        OR: [
+          { senderId: id },
+          { receiverId: id }
+        ]
+      } 
+    });
+    
+    await prisma.user.delete({ where: { id } });
+    
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    return NextResponse.json({ error: 'Error deleting user' }, { status: 500 });
+  }
+}

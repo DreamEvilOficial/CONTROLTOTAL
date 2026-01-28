@@ -65,6 +65,7 @@ export async function POST(
 
     if (match) {
       // TRANSACCIÓN ENCONTRADA Y APROBADA
+      console.log(`[PAYMENT VERIFIED] TxID: ${transaction.id}, MP_ID: ${match.id}, Amount: ${match.transaction_amount}, User: ${transaction.user.username}`);
       
       // Usar transacción de prisma para asegurar atomicidad
       await prisma.$transaction(async (tx: any) => {

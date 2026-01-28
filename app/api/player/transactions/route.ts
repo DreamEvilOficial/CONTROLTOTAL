@@ -54,9 +54,10 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { amount, type, withdrawalCvu, withdrawalAlias, withdrawalBank } = z.object({
+    const { amount, type, method, withdrawalCvu, withdrawalAlias, withdrawalBank } = z.object({
       amount: z.number().positive(),
       type: z.enum(['DEPOSIT', 'WITHDRAW']),
+      method: z.enum(['MANUAL', 'AUTO', 'MP']).optional(),
       withdrawalCvu: z.string().optional(),
       withdrawalAlias: z.string().optional(),
       withdrawalBank: z.string().optional(),
@@ -73,20 +74,43 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Saldo insuficiente' }, { status: 400 });
     }
 
-    if (!user.managerId) {
-      return NextResponse.json({ error: 'No tienes un agente asignado' }, { status: 400 });
-    }
+    // Allow transaction even without manager if system config exists (users might be direct)
+    // if (!user.managerId) {
+    //   return NextResponse.json({ error: 'No tienes un agente asignado' }, { status: 400 });
+    // }
 
     let expectedAmount = null;
 
-    // Si es depósito y el agente tiene MP activado, generar monto con decimales
-    if (type === 'DEPOSIT' && user.manager?.mpEnabled && user.manager.mpAccessToken) {
-      // Generar decimal aleatorio entre 0.01 y 0.99
-      const decimal = Math.floor(Math.random() * 99) + 1;
-      expectedAmount = amount + (decimal / 100);
+    // Check MP availability (Agent or System)
+    const systemConfig = await prisma.systemConfig.findUnique({ where: { id: 'config' } });
+    const agentMp = user.manager?.mpEnabled && user.manager?.mpAccessToken;
+    const systemMp = !!systemConfig?.mpAccessToken;
+    
+    // Si es depósito AUTO y hay MP configurado, generar monto con decimales
+    if (type === 'DEPOSIT' && method === 'AUTO' && (agentMp || systemMp)) {
+      let unique = false;
+      let attempts = 0;
       
-      // Asegurar que no exista otra transacción pendiente con el mismo monto exacto (opcional pero recomendado)
-      // Por simplicidad, asumimos colisión baja o manejable
+      while (!unique && attempts < 10) {
+        // Generar decimal aleatorio entre 0.01 y 0.99
+        const decimal = Math.floor(Math.random() * 99) + 1;
+        const candidate = amount + (decimal / 100);
+        
+        // Check for collision with other PENDING transactions
+        const existing = await prisma.transaction.findFirst({
+          where: {
+            status: 'PENDING',
+            type: 'DEPOSIT',
+            expectedAmount: candidate
+          }
+        });
+        
+        if (!existing) {
+          expectedAmount = candidate;
+          unique = true;
+        }
+        attempts++;
+      }
     }
 
     const transaction = await prisma.transaction.create({
@@ -94,14 +118,17 @@ export async function POST(request: Request) {
         amount,
         expectedAmount,
         type,
+        method,
         userId: user.id,
-        agentId: user.managerId,
+        agentId: user.managerId, // Can be null if using system config
         status: 'PENDING',
         withdrawalCvu,
         withdrawalAlias,
         withdrawalBank,
       } as any,
     });
+
+    console.log(`[TRANSACTION CREATED] ID: ${transaction.id}, User: ${user.username}, Amount: ${amount}, Type: ${type}, Method: ${method || 'N/A'}, Expected: ${expectedAmount}`);
 
     return NextResponse.json(transaction);
   } catch (error) {

@@ -90,19 +90,22 @@ export default function ChatWindow({ transactionId, currentUserRole, onClose }: 
   };
 
   return (
-    <div className="flex flex-col h-[500px] bg-white rounded-lg shadow-xl overflow-hidden">
+    <div className="flex flex-col h-full bg-[#1a1a1a] text-white overflow-hidden">
       {/* Header */}
-      <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
-        <h3 className="font-bold">Chat de Soporte</h3>
+      <div className="p-4 border-b border-white/10 bg-white/5 flex justify-between items-center shrink-0">
+        <h3 className="font-bold flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"/>
+          Soporte
+        </h3>
         {onClose && (
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-lg">
             ✕
           </button>
         )}
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-black/20">
         {messages.map((msg) => {
           const isMe = (currentUserRole === 'PLAYER' && msg.sender.role === 'PLAYER') ||
                        (currentUserRole !== 'PLAYER' && msg.sender.role !== 'PLAYER');
@@ -113,24 +116,23 @@ export default function ChatWindow({ transactionId, currentUserRole, onClose }: 
               className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[80%] rounded-lg p-3 ${
+                className={`max-w-[85%] rounded-2xl p-3 text-sm ${
                   isMe
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-800'
+                    ? 'bg-primary text-black rounded-tr-none'
+                    : 'bg-white/10 text-white rounded-tl-none'
                 }`}
               >
-                <div className="text-xs opacity-75 mb-1">
+                <div className="text-[10px] font-bold opacity-70 mb-1 flex items-center gap-1">
                   {msg.sender.role === 'ADMIN' ? (
                     <>
-                      <span className="text-red-600 font-bold mr-1">[SOPORTE]</span>
-                      {msg.sender.name}
+                      <span className="text-red-500">[SOPORTE]</span>
                     </>
                   ) : (
                     msg.sender.name
                   )}
                 </div>
-                <div className="whitespace-pre-wrap">{msg.content}</div>
-                <div className="text-xs opacity-75 mt-1 text-right">
+                <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+                <div className="text-[10px] opacity-50 mt-1 text-right">
                   {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
@@ -142,12 +144,12 @@ export default function ChatWindow({ transactionId, currentUserRole, onClose }: 
 
       {/* Quick Actions (Agent Only) */}
       {currentUserRole === 'AGENT' && (
-        <div className="p-2 bg-gray-100 border-t flex gap-2 overflow-x-auto">
+        <div className="p-2 border-t border-white/10 bg-white/5 flex gap-2 overflow-x-auto">
           {cvus.map((cvu) => (
             <button
               key={cvu.id}
               onClick={() => sendCvuInfo(cvu)}
-              className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs whitespace-nowrap"
+              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs whitespace-nowrap transition-colors border border-white/5"
             >
               Enviar {cvu.bankName}
             </button>
@@ -156,18 +158,19 @@ export default function ChatWindow({ transactionId, currentUserRole, onClose }: 
       )}
 
       {/* Input Area */}
-      <form onSubmit={sendMessage} className="p-4 bg-white border-t">
+      <form onSubmit={sendMessage} className="p-4 border-t border-white/10 bg-white/5">
         <div className="flex gap-2">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Escribe un mensaje..."
-            className="flex-1 border rounded px-3 py-2 focus:outline-none focus:border-blue-500"
+            className="flex-1 bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary/50 transition-colors placeholder:text-gray-500"
           />
           <button
             type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            disabled={!newMessage.trim()}
+            className="bg-primary text-black px-4 py-2 rounded-xl hover:bg-primary/90 transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Enviar
           </button>

@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 const platformSchema = z.object({
   name: z.string().min(1),
+  url: z.string().url().optional().or(z.literal('')),
   bonus: z.string().min(1),
   active: z.boolean().optional(),
 });

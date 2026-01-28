@@ -24,6 +24,12 @@ export async function GET() {
         select: {
           username: true,
           name: true,
+          platformUser: true,
+          platform: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
     },

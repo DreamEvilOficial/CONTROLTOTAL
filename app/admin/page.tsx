@@ -29,16 +29,22 @@ import {
   Edit,
   Key
 } from 'lucide-react';
+import MarketingTab from '@/components/MarketingTab';
 
 interface Transaction {
   id: string;
   type: string;
   amount: number;
   status: string;
+  method?: string;
   createdAt: string;
   user: {
     username: string;
     name: string;
+    platformUser?: string;
+    platform?: {
+      name: string;
+    };
   };
   withdrawalCvu?: string;
   withdrawalAlias?: string;
@@ -103,6 +109,7 @@ interface Config {
 interface Platform {
   id: string;
   name: string;
+  url?: string;
   bonus: string;
   active: boolean;
 }
@@ -120,7 +127,7 @@ export default function AdminDashboard() {
   
   // Forms
   const [newCvu, setNewCvu] = useState({ bankName: '', alias: '', cbu: '', holderName: '' });
-  const [newPlatform, setNewPlatform] = useState({ name: '', bonus: '' });
+  const [newPlatform, setNewPlatform] = useState({ name: '', url: '', bonus: '' });
   const [newUser, setNewUser] = useState({ username: '', password: '', name: '', whatsapp: '' });
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
@@ -146,8 +153,11 @@ export default function AdminDashboard() {
     fetchUsers();
     fetchConversations();
     
-    // Poll for chat updates every 3 seconds
+    // Poll for updates every 3 seconds
     const interval = setInterval(() => {
+      fetchTransactions();
+      fetchStats();
+      fetchActivity();
       fetchConversations();
       if (selectedChatUser) {
         fetchAdminMessages(selectedChatUser.id);
@@ -339,6 +349,23 @@ export default function AdminDashboard() {
     }
   };
 
+  const deleteUser = async (id: string) => {
+    if (!confirm('¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.')) return;
+    try {
+      const res = await fetch(`/api/admin/users?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        fetchUsers();
+        fetchStats();
+      } else {
+        alert('Error eliminando usuario');
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+    }
+  };
+
   const handleTransactionAction = async (id: string, action: 'COMPLETED' | 'REJECTED') => {
     setActionLoading(id);
     try {
@@ -441,7 +468,7 @@ export default function AdminDashboard() {
         body: JSON.stringify(newPlatform),
       });
       if (res.ok) {
-        setNewPlatform({ name: '', bonus: '' });
+        setNewPlatform({ name: '', url: '', bonus: '' });
         fetchPlatforms();
       }
     } catch (error) {
@@ -594,6 +621,8 @@ export default function AdminDashboard() {
           </button>
         </div>
 
+        {activeTab === 'marketing' && <MarketingTab />}
+
         {activeTab === 'overview' && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Stats Cards */}
@@ -690,6 +719,11 @@ export default function AdminDashboard() {
                                 }`}>
                                   {tx.type === 'DEPOSIT' ? 'Depósito' : 'Retiro'}
                                 </span>
+                                {tx.method && (
+                                  <span className="text-xs font-bold px-2 py-0.5 rounded uppercase bg-blue-500/10 text-blue-500">
+                                    {tx.method === 'AUTO' ? 'Auto' : tx.method === 'MP' ? 'MercadoPago' : 'Manual'}
+                                  </span>
+                                )}
                                 <span className="text-xs text-gray-500">
                                   {new Date(tx.createdAt).toLocaleString()}
                                 </span>
@@ -698,6 +732,14 @@ export default function AdminDashboard() {
                               <p className="text-sm text-gray-400">
                                 Usuario: <span className="text-white font-medium">{tx.user.username}</span>
                               </p>
+                              {tx.user.platform && (
+                                <p className="text-sm text-gray-400">
+                                  Casino: <span className="text-white font-medium">{tx.user.platform.name}</span>
+                                  {tx.user.platformUser && (
+                                    <span className="ml-2 text-xs opacity-70">({tx.user.platformUser})</span>
+                                  )}
+                                </p>
+                              )}
                               {tx.type === 'WITHDRAW' && (
                                 <div className="mt-2 text-xs bg-black/20 p-2 rounded text-gray-400 border border-white/5">
                                   {tx.withdrawalCvu && <p>CVU: <span className="text-white select-all">{tx.withdrawalCvu}</span></p>}
@@ -867,7 +909,7 @@ export default function AdminDashboard() {
                         
                         <div className="mt-3 p-3 bg-black/20 rounded-lg border border-white/5 text-sm">
                           <p className="text-gray-400 mb-1">Plataforma: <span className="text-white font-medium">{user.platform?.name || 'No asignada'}</span></p>
-                          {user.platformUser && (
+                          {user.platformUser ? (
                             <div className="flex gap-4 mt-2 pt-2 border-t border-white/5">
                               <div>
                                 <span className="text-xs text-gray-500 block">Usuario Casino</span>
@@ -877,6 +919,11 @@ export default function AdminDashboard() {
                                 <span className="text-xs text-gray-500 block">Contraseña Casino</span>
                                 <span className="text-white font-mono">{user.platformPassword}</span>
                               </div>
+                            </div>
+                          ) : (
+                            <div className="mt-2 bg-yellow-500/10 text-yellow-500 text-xs px-2 py-1 rounded inline-flex items-center gap-1 animate-pulse">
+                              <Clock className="w-3 h-3" />
+                              Pendiente de Credenciales
                             </div>
                           )}
                         </div>
@@ -889,6 +936,13 @@ export default function AdminDashboard() {
                       >
                         <Edit className="w-5 h-5" />
                       </button>
+                      <button
+                        onClick={() => deleteUser(user.id)}
+                        className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg text-red-500 transition-colors ml-2"
+                        title="Eliminar Usuario"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -899,6 +953,8 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {activeTab === 'marketing' && <MarketingTab />}
 
         {/* Edit User Modal */}
         {editingUser && (
@@ -1159,6 +1215,16 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div>
+                  <label className="text-sm text-gray-400 mb-1 block">URL de la Plataforma</label>
+                  <input
+                    type="url"
+                    value={newPlatform.url || ''}
+                    onChange={(e) => setNewPlatform({...newPlatform, url: e.target.value})}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    placeholder="https://..."
+                  />
+                </div>
+                <div>
                   <label className="text-sm text-gray-400 mb-1 block">Bono de Bienvenida</label>
                   <textarea
                     required
@@ -1188,6 +1254,16 @@ export default function AdminDashboard() {
                 <div key={platform.id} className="bg-white/5 rounded-xl p-5 border border-white/10 flex justify-between items-start group">
                   <div>
                     <h4 className="font-bold text-lg">{platform.name}</h4>
+                    {platform.url && (
+                      <a 
+                        href={platform.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-primary hover:underline text-sm block mt-1"
+                      >
+                        {platform.url}
+                      </a>
+                    )}
                     <p className="text-gray-400 text-sm mt-2">{platform.bonus}</p>
                     <span className="inline-block mt-3 px-2 py-1 rounded text-xs font-bold bg-green-500/10 text-green-500">
                       ACTIVA

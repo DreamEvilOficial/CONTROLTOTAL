@@ -23,9 +23,10 @@ export async function GET() {
     select: { 
       balance: true, 
       username: true,
-      platform: { select: { name: true } },
+      platform: { select: { name: true, url: true } },
       platformUser: true,
-      platformPassword: true
+      platformPassword: true,
+      onboardingCompleted: true
     },
   });
 
@@ -33,7 +34,9 @@ export async function GET() {
     balance: userData?.balance || 0,
     username: userData?.username || '',
     platformName: userData?.platform?.name,
+    platformUrl: userData?.platform?.url,
     platformUser: userData?.platformUser,
     platformPassword: userData?.platformPassword,
+    onboardingCompleted: userData?.onboardingCompleted || false,
   });
 }

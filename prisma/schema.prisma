@@ -25,14 +25,14 @@ model User {
   // Platform specific
   platformUser     String?
   platformPassword String?
+  onboardingCompleted Boolean @default(false)
   
   // Agent specific config
   mpAccessToken String? // MercadoPago Access Token
   mpEnabled     Boolean @default(false)
   
   // Admin specific config
-  metaAccessToken String?
-  metaAdAccountId String?
+  // Meta fields moved to SystemConfig
 
   // Relations
   managerId String?  
@@ -60,6 +60,8 @@ model SystemConfig {
   whatsappNumber  String?
   mpAccessToken   String?
   mpPublicKey     String?
+  metaAccessToken String?
+  metaAdAccountId String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -67,6 +69,7 @@ model SystemConfig {
 model Platform {
   id          String   @id @default(uuid())
   name        String
+  url         String?
   bonus       String
   active      Boolean  @default(true)
   users       User[]
@@ -79,6 +82,7 @@ model Transaction {
   amount    Float
   expectedAmount Float?       // Monto con decimales para identificación MP
   type      String
+  method    String?           // MANUAL, AUTO, MP
   status    String            @default("PENDING")
   
   // MercadoPago Info

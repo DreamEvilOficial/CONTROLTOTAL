@@ -72,17 +72,20 @@ export default function SupportChat() {
 
   if (!isOpen) {
     return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-primary text-black rounded-full shadow-lg shadow-primary/20 flex items-center justify-center hover:scale-110 transition-transform z-50 group"
-      >
-        <MessageCircle className="w-8 h-8 group-hover:rotate-12 transition-transform" />
-      </button>
+      <div className="fixed bottom-6 right-6 z-50">
+        <button
+          onClick={() => setIsOpen(true)}
+          className="w-14 h-14 bg-primary text-black rounded-full shadow-lg shadow-primary/20 flex items-center justify-center hover:scale-110 transition-all duration-300 hover:rotate-12 group"
+        >
+          <MessageCircle className="w-7 h-7" />
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-[#050505]"></span>
+        </button>
+      </div>
     );
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-80 sm:w-96 h-[500px] bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 animate-in slide-in-from-bottom-10 fade-in">
+    <div className="fixed bottom-6 right-6 w-80 sm:w-96 h-[500px] bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 animate-in slide-in-from-bottom-10 fade-in duration-300 origin-bottom-right">
       {/* Header */}
       <div className="p-4 bg-primary/10 border-b border-white/5 flex justify-between items-center">
         <div className="flex items-center gap-2">

@@ -14,12 +14,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const admin = await prisma.user.findUnique({
-      where: { id: decoded.id as string },
+    const config = await prisma.systemConfig.findUnique({
+      where: { id: 'config' },
       select: { metaAccessToken: true, metaAdAccountId: true }
     });
 
-    if (!admin?.metaAccessToken || !admin?.metaAdAccountId) {
+    if (!config?.metaAccessToken || !config?.metaAdAccountId) {
       return NextResponse.json({ error: 'Meta Ads not configured' }, { status: 400 });
     }
 
@@ -29,9 +29,9 @@ export async function POST(req: Request) {
     const AdAccount = bizSdk.AdAccount;
     const Campaign = bizSdk.Campaign;
 
-    bizSdk.FacebookAdsApi.init(admin.metaAccessToken);
+    bizSdk.FacebookAdsApi.init(config.metaAccessToken);
 
-    const account = new AdAccount(admin.metaAdAccountId);
+    const account = new AdAccount(config.metaAdAccountId);
     
     // Crear Campaña
     const campaign = await account.createCampaign(

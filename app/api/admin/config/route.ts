@@ -8,6 +8,8 @@ const configSchema = z.object({
   whatsappNumber: z.string().optional().nullable(),
   mpAccessToken: z.string().optional().nullable(),
   mpPublicKey: z.string().optional().nullable(),
+  metaAccessToken: z.string().optional().nullable(),
+  metaAdAccountId: z.string().optional().nullable(),
 });
 
 async function checkAdmin() {
