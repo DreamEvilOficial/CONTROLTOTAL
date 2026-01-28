@@ -53,7 +53,7 @@ export default function PrivacyPolicy() {
         </div>
         
         <div className="mt-12 pt-8 border-t border-white/10 text-center text-gray-500 text-sm">
-          <p>© {new Date().getFullYear()} Casino Platform. Todos los derechos reservados.</p>
+          <p>© {new Date().getFullYear()} CargarFichasYA. Todos los derechos reservados.</p>
         </div>
       </div>
     </div>

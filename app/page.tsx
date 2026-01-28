@@ -18,8 +18,8 @@ export default function Home() {
         </div>
 
         <h1 className="text-6xl md:text-8xl font-black mb-6 tracking-tight">
-          <span className="text-white text-glow">CASINO</span>
-          <span className="text-primary ml-4 text-glow">PLATFORM</span>
+          <span className="text-white text-glow">CargarFichas</span>
+          <span className="text-primary ml-4 text-glow">YA</span>
         </h1>
         
         <p className="text-xl md:text-2xl mb-12 text-gray-300 font-light max-w-2xl mx-auto leading-relaxed">
@@ -65,7 +65,7 @@ export default function Home() {
       </main>
       
       <footer className="absolute bottom-4 text-gray-600 text-sm">
-        © 2026 Casino Platform. Todos los derechos reservados.
+        © 2026 CargarFichasYA. Todos los derechos reservados.
       </footer>
     </div>
   );

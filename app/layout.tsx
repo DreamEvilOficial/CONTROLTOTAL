@@ -6,7 +6,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Casino Platform",
+  title: "CargarFichasYA",
   description: "Plataforma de gestión de usuarios y agentes",
 };
 
