@@ -11,6 +11,7 @@ async function getPlayer() {
   return payload;
 }
 
+// Force refresh
 export async function GET() {
   const player = await getPlayer();
   if (!player) {
@@ -19,11 +20,20 @@ export async function GET() {
 
   const userData = await prisma.user.findUnique({
     where: { id: player.id as string },
-    select: { balance: true, username: true },
+    select: { 
+      balance: true, 
+      username: true,
+      platform: { select: { name: true } },
+      platformUser: true,
+      platformPassword: true
+    },
   });
 
   return NextResponse.json({
     balance: userData?.balance || 0,
     username: userData?.username || '',
+    platformName: userData?.platform?.name,
+    platformUser: userData?.platformUser,
+    platformPassword: userData?.platformPassword,
   });
 }

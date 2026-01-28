@@ -20,6 +20,11 @@ model User {
   name      String
   role      String   @default("PLAYER")
   balance   Float    @default(0)
+  whatsapp  String?
+  
+  // Platform specific
+  platformUser     String?
+  platformPassword String?
   
   // Agent specific config
   mpAccessToken String? // MercadoPago Access Token

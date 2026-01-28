@@ -17,7 +17,6 @@ import {
   Clock,
   TrendingUp,
   UserPlus,
-  Trash2,
   Settings,
   Gamepad2,
   Trash2,
@@ -26,7 +25,9 @@ import {
   MessageCircle,
   Send,
   X,
-  RefreshCw
+  RefreshCw,
+  Edit,
+  Key
 } from 'lucide-react';
 
 interface Transaction {
@@ -75,7 +76,22 @@ interface Cvu {
   bankName: string;
   alias: string;
   cbu: string;
+  holderName?: string;
   active: boolean;
+}
+
+interface User {
+  id: string;
+  username: string;
+  name: string;
+  role: string;
+  balance: number;
+  whatsapp?: string;
+  platformId?: string;
+  platform?: Platform;
+  platformUser?: string;
+  platformPassword?: string;
+  createdAt: string;
 }
 
 interface Config {
@@ -98,12 +114,15 @@ export default function AdminDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [activity, setActivity] = useState<ActivityData | null>(null);
   const [cvus, setCvus] = useState<Cvu[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [config, setConfig] = useState<Config>({ whatsappNumber: '', mpAccessToken: '', mpPublicKey: '' });
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   
   // Forms
-  const [newCvu, setNewCvu] = useState({ bankName: '', alias: '', cbu: '' });
+  const [newCvu, setNewCvu] = useState({ bankName: '', alias: '', cbu: '', holderName: '' });
   const [newPlatform, setNewPlatform] = useState({ name: '', bonus: '' });
+  const [newUser, setNewUser] = useState({ username: '', password: '', name: '', whatsapp: '' });
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   // Chat state
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -124,6 +143,7 @@ export default function AdminDashboard() {
     fetchCvus();
     fetchConfig();
     fetchPlatforms();
+    fetchUsers();
     fetchConversations();
     
     // Poll for chat updates every 3 seconds
@@ -256,6 +276,66 @@ export default function AdminDashboard() {
       if (res.ok) setPlatforms(await res.json());
     } catch (error) {
       console.error('Error fetching platforms:', error);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch('/api/admin/users');
+      if (res.ok) setUsers(await res.json());
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const createUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser),
+      });
+      if (res.ok) {
+        setNewUser({ username: '', password: '', name: '', whatsapp: '' });
+        fetchUsers();
+        fetchStats();
+      } else {
+        const error = await res.json();
+        alert(error.error || 'Error creando usuario');
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingUser.id,
+          platformId: editingUser.platformId,
+          platformUser: editingUser.platformUser,
+          platformPassword: editingUser.platformPassword,
+          whatsapp: editingUser.whatsapp,
+        }),
+      });
+      if (res.ok) {
+        setEditingUser(null);
+        fetchUsers();
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -456,6 +536,17 @@ export default function AdminDashboard() {
           >
             <BarChart3 className="w-4 h-4" />
             Resumen
+          </button>
+          <button
+            onClick={() => setActiveTab('players')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+              activeTab === 'players' 
+                ? 'bg-primary text-black shadow-lg shadow-primary/20' 
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Jugadores
           </button>
           <button
             onClick={() => setActiveTab('cvus')}
@@ -684,6 +775,213 @@ export default function AdminDashboard() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'players' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Create User Form */}
+            <div className="lg:col-span-1 h-fit bg-white/5 rounded-2xl p-6 border border-white/10">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-primary" />
+                Crear Jugador
+              </h3>
+              <form onSubmit={createUser} className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Usuario</label>
+                  <input
+                    type="text"
+                    required
+                    value={newUser.username}
+                    onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    placeholder="Usuario"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Contraseña</label>
+                  <input
+                    type="password"
+                    required
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    placeholder="Contraseña"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Nombre Completo</label>
+                  <input
+                    type="text"
+                    required
+                    value={newUser.name}
+                    onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    placeholder="Nombre Completo"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">WhatsApp (Opcional)</label>
+                  <input
+                    type="text"
+                    value={newUser.whatsapp}
+                    onChange={(e) => setNewUser({...newUser, whatsapp: e.target.value})}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    placeholder="+54911..."
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary text-black font-bold py-3 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Creando...' : 'Crear Jugador'}
+                </button>
+              </form>
+            </div>
+
+            {/* User List */}
+            <div className="lg:col-span-2 space-y-4">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                Jugadores Registrados
+              </h3>
+              <div className="grid gap-4">
+                {users.map((user) => (
+                  <div key={user.id} className="bg-white/5 rounded-xl p-5 border border-white/10 hover:border-primary/20 transition-all">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-bold text-lg text-white">{user.username}</h4>
+                          <span className="px-2 py-0.5 rounded text-xs bg-primary/10 text-primary font-bold">
+                            ${user.balance.toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-400">{user.name}</p>
+                        {user.whatsapp && (
+                          <p className="text-sm text-gray-400 mt-1 flex items-center gap-1">
+                            <MessageCircle className="w-3 h-3" /> {user.whatsapp}
+                          </p>
+                        )}
+                        
+                        <div className="mt-3 p-3 bg-black/20 rounded-lg border border-white/5 text-sm">
+                          <p className="text-gray-400 mb-1">Plataforma: <span className="text-white font-medium">{user.platform?.name || 'No asignada'}</span></p>
+                          {user.platformUser && (
+                            <div className="flex gap-4 mt-2 pt-2 border-t border-white/5">
+                              <div>
+                                <span className="text-xs text-gray-500 block">Usuario Casino</span>
+                                <span className="text-white font-mono">{user.platformUser}</span>
+                              </div>
+                              <div>
+                                <span className="text-xs text-gray-500 block">Contraseña Casino</span>
+                                <span className="text-white font-mono">{user.platformPassword}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={() => setEditingUser(user)}
+                        className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-primary transition-colors"
+                        title="Editar Credenciales"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {users.length === 0 && (
+                  <p className="text-center text-gray-500 py-8">No hay jugadores registrados</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit User Modal */}
+        {editingUser && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold">Editar Jugador: {editingUser.username}</h3>
+                <button onClick={() => setEditingUser(null)} className="text-gray-400 hover:text-white">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <form onSubmit={updateUser} className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">WhatsApp</label>
+                  <input
+                    type="text"
+                    value={editingUser.whatsapp || ''}
+                    onChange={(e) => setEditingUser({...editingUser, whatsapp: e.target.value})}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Plataforma</label>
+                  <select
+                    value={editingUser.platformId || ''}
+                    onChange={(e) => setEditingUser({...editingUser, platformId: e.target.value})}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                  >
+                    <option value="">Seleccionar Plataforma</option>
+                    {platforms.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {editingUser.platformId && (
+                  <div className="space-y-4 pt-4 border-t border-white/10">
+                    <p className="text-sm font-bold text-primary flex items-center gap-2">
+                      <Key className="w-4 h-4" />
+                      Credenciales del Casino
+                    </p>
+                    <div>
+                      <label className="text-sm text-gray-400 mb-1 block">Usuario en Casino</label>
+                      <input
+                        type="text"
+                        value={editingUser.platformUser || ''}
+                        onChange={(e) => setEditingUser({...editingUser, platformUser: e.target.value})}
+                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                        placeholder="Usuario asignado"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-400 mb-1 block">Contraseña en Casino</label>
+                      <input
+                        type="text"
+                        value={editingUser.platformPassword || ''}
+                        onChange={(e) => setEditingUser({...editingUser, platformPassword: e.target.value})}
+                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                        placeholder="Contraseña asignada"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-4 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditingUser(null)}
+                    className="flex-1 py-3 rounded-lg bg-white/5 hover:bg-white/10 text-white font-bold transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 py-3 rounded-lg bg-primary text-black font-bold hover:bg-primary/90 transition-colors"
+                  >
+                    {loading ? 'Guardando...' : 'Guardar Cambios'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

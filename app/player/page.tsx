@@ -2,13 +2,19 @@
 
 import { useEffect, useState, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Wallet, ArrowUpCircle, ArrowDownCircle, History, MessageCircle, CheckCircle, Clock, XCircle, RefreshCw } from 'lucide-react';
+import { LogOut, Wallet, ArrowUpCircle, ArrowDownCircle, History, MessageCircle, CheckCircle, Clock, XCircle, RefreshCw, Key } from 'lucide-react';
 import ChatWindow from '@/components/ChatWindow';
 import SupportChat from '@/components/SupportChat';
 
 export default function PlayerDashboard() {
   const router = useRouter();
-  const [stats, setStats] = useState({ balance: 0, username: '' });
+  const [stats, setStats] = useState({ 
+    balance: 0, 
+    username: '', 
+    platformName: '', 
+    platformUser: '', 
+    platformPassword: '' 
+  });
   const [transactions, setTransactions] = useState<any[]>([]);
   const [activeCvus, setActiveCvus] = useState<any[]>([]);
   const [showDepositModal, setShowDepositModal] = useState(false);
@@ -178,10 +184,35 @@ export default function PlayerDashboard() {
           <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
             <Wallet className="w-32 h-32 text-primary" />
           </div>
-          <h2 className="text-gray-400 text-sm uppercase tracking-wider mb-2 font-medium">Mi Usuario</h2>
-          <div className="text-5xl font-black text-white mb-8 tracking-tighter text-glow">
-            {stats.username}
+          
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 relative z-10 mb-8">
+            <div>
+              <h2 className="text-gray-400 text-sm uppercase tracking-wider mb-2 font-medium">Mi Usuario</h2>
+              <div className="text-5xl font-black text-white tracking-tighter text-glow">
+                {stats.username}
+              </div>
+            </div>
+
+            {stats.platformUser && (
+              <div className="bg-black/30 rounded-xl p-4 border border-white/10 backdrop-blur-md">
+                <h3 className="text-primary font-bold flex items-center gap-2 mb-3">
+                  <Key className="w-4 h-4" />
+                  Credenciales: {stats.platformName || 'Casino'}
+                </h3>
+                <div className="flex gap-6">
+                  <div>
+                    <span className="text-xs text-gray-400 block mb-1">Usuario</span>
+                    <span className="text-white font-mono font-bold text-lg select-all">{stats.platformUser}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-400 block mb-1">Contraseña</span>
+                    <span className="text-white font-mono font-bold text-lg select-all">{stats.platformPassword}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
+
           <div className="flex gap-4 relative z-10">
             <button
               onClick={() => setShowDepositModal(true)}
@@ -255,13 +286,24 @@ export default function PlayerDashboard() {
                     </td>
                     <td className="py-4 pr-4 text-right">
                       <div className="flex gap-2 justify-end">
-                        <button
-                          onClick={() => setSelectedTx(tx.id)}
-                          className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
-                          title="Chat"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                        </button>
+                        {tx.status === 'PENDING' && tx.type === 'DEPOSIT' ? (
+                           <button
+                             onClick={() => setSelectedTx(tx.id)}
+                             className="p-2 hover:bg-primary/20 rounded-lg text-primary hover:text-white transition-colors flex items-center gap-2"
+                             title="Continuar Pago"
+                           >
+                             <Wallet className="w-4 h-4" />
+                             <span className="text-xs font-bold hidden md:inline">Pagar</span>
+                           </button>
+                        ) : (
+                          <button
+                            onClick={() => setSelectedTx(tx.id)}
+                            className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
+                            title="Ver Detalles"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </button>
+                        )}
                         {tx.status === 'PENDING' && tx.expectedAmount && (
                           <button
                             onClick={() => checkPayment(tx.id)}

@@ -23,6 +23,20 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Cancel expired pending deposit transactions (older than 20 minutes)
+  const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000);
+  await prisma.transaction.updateMany({
+    where: {
+      userId: player.id as string,
+      type: 'DEPOSIT',
+      status: 'PENDING',
+      createdAt: { lt: twentyMinutesAgo },
+    },
+    data: {
+      status: 'REJECTED', // Or create 'EXPIRED' status if schema allows, but REJECTED is safer for now
+    },
+  });
+
   const transactions = await prisma.transaction.findMany({
     where: { userId: player.id as string },
     orderBy: { createdAt: 'desc' },

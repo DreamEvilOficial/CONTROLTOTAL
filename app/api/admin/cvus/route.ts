@@ -8,6 +8,7 @@ const cvuSchema = z.object({
   bankName: z.string(),
   alias: z.string(),
   cbu: z.string(),
+  holderName: z.string().optional(),
 });
 
 async function checkAdmin() {
@@ -71,5 +72,29 @@ export async function PUT(request: Request) {
     return NextResponse.json(cvu);
   } catch (error: any) {
     return NextResponse.json({ error: 'Error actualizando CVU' }, { status: 400 });
+  }
+}
+
+// Force refresh
+export async function DELETE(request: Request) {
+  if (!(await checkAdmin())) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+
+  if (!id) {
+    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+  }
+
+  try {
+    await prisma.cvu.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: 'Error eliminando CVU' }, { status: 400 });
   }
 }
