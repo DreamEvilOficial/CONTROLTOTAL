@@ -273,7 +273,20 @@ export default function PlayerDashboard() {
               <div className="bg-black/40 rounded-2xl p-6 border border-white/10 text-left space-y-4 shadow-inner">
                 <div className="flex justify-between items-center pb-3 border-b border-white/5">
                   <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Plataforma</span>
-                  <span className="font-bold text-primary">{stats.platformName || 'Casino'}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-primary">{stats.platformName || 'Casino'}</span>
+                    {stats.platformUrl && (
+                      <a 
+                        href={stats.platformUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-white transition-colors"
+                        title="Ir al sitio"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="space-y-3">
@@ -380,40 +393,57 @@ export default function PlayerDashboard() {
             <Wallet className="w-32 h-32 text-primary" />
           </div>
           
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 relative z-10 mb-8">
-            <div>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 relative z-10 mb-8">
+            <div className="w-full md:w-auto text-center md:text-left">
               <h2 className="text-gray-400 text-sm uppercase tracking-wider mb-2 font-medium">Mi Usuario</h2>
               <div className="text-5xl font-black text-white tracking-tighter text-glow">
                 {stats.username}
               </div>
             </div>
 
-            {stats.platformUser && (
-              <div className="bg-black/30 rounded-xl p-4 border border-white/10 backdrop-blur-md">
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-primary font-bold flex items-center gap-2">
-                    <Key className="w-4 h-4" />
-                    Credenciales: {stats.platformName || 'Casino'}
-                  </h3>
-                  {stats.platformUrl && (
+            {stats.platformName && (
+              <div className="flex flex-col items-center justify-center gap-2 order-last md:order-none w-full md:w-auto">
+                <div className="text-2xl font-bold text-white tracking-tight">{stats.platformName}</div>
+                {stats.platformUrl && (
                     <a 
                       href={stats.platformUrl} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-xs bg-primary/10 text-primary px-2 py-1 rounded hover:bg-primary/20 transition-colors flex items-center gap-1"
+                      className="group flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all text-sm text-gray-300 hover:text-white"
                     >
-                      Ir al Casino <ExternalLink className="w-3 h-3" />
+                      <span>Ir a la página</span>
+                      <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                     </a>
-                  )}
+                )}
+              </div>
+            )}
+
+            {stats.platformUser && (
+              <div className="bg-black/30 rounded-xl p-4 border border-white/10 backdrop-blur-md w-full md:w-auto">
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="text-primary font-bold flex items-center gap-2">
+                    <Key className="w-4 h-4" />
+                    Credenciales
+                  </h3>
                 </div>
                 <div className="flex gap-6">
-                  <div>
+                  <div className="group relative">
                     <span className="text-xs text-gray-400 block mb-1">Usuario</span>
-                    <span className="text-white font-mono font-bold text-lg select-all">{stats.platformUser}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white font-mono font-bold text-lg select-all">{stats.platformUser}</span>
+                      <button onClick={() => handleCopy(stats.platformUser, 'user')} className="text-gray-500 hover:text-white transition-colors p-1 rounded hover:bg-white/5">
+                        {copiedUser ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                    </div>
                   </div>
-                  <div>
+                  <div className="group relative">
                     <span className="text-xs text-gray-400 block mb-1">Contraseña</span>
-                    <span className="text-white font-mono font-bold text-lg select-all">{stats.platformPassword}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white font-mono font-bold text-lg select-all">{stats.platformPassword}</span>
+                      <button onClick={() => handleCopy(stats.platformPassword, 'pass')} className="text-gray-500 hover:text-white transition-colors p-1 rounded hover:bg-white/5">
+                        {copiedPass ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
