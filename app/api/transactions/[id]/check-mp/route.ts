@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 import MercadoPagoConfig, { Payment } from 'mercadopago';
 
 // Función auxiliar para inicializar cliente MP dinámicamente
@@ -48,7 +48,7 @@ export async function POST(
     
     // Filtrar manualmente por monto exacto y estado approved
     // MercadoPago a veces devuelve muchos resultados, iteramos para encontrar match
-    const match = searchResult.results?.find((p: { status: string; transaction_amount: number; id: number | string }) => 
+    const match = searchResult.results?.find((p: any) => 
       p.status === 'approved' && 
       Math.abs(p.transaction_amount - (transaction.expectedAmount || 0)) < 0.001
     );

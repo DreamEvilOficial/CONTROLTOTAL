@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { verifyJWT } from '@/lib/auth';
+import { verifyJWT } from '@/lib/jwt';
 import * as bizSdk from 'facebook-nodejs-business-sdk';
 import { cookies } from 'next/headers';
 

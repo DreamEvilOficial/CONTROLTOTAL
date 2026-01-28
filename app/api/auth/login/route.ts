@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { comparePassword, signJWT } from '@/lib/auth';
+import { comparePassword } from '@/lib/auth';
+import { signJWT } from '@/lib/jwt';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
 
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
     const token = await signJWT({
       id: user.id,
       email: user.email,
-      role: user.role,
+      role: user.role as 'ADMIN' | 'AGENT' | 'PLAYER',
       name: user.name,
     });
 

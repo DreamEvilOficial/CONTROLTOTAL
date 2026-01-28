@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { verifyJWT, hashPassword } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth';
+import { verifyJWT } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 
