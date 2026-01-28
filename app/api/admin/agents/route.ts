@@ -11,15 +11,17 @@ const agentSchema = z.object({
   password: z.string().min(6),
 });
 
-async function checkAdmin() {
+async function getAdmin() {
   const token = cookies().get('token')?.value;
-  if (!token) return false;
+  if (!token) return null;
   const payload = await verifyJWT(token);
-  return payload?.role === 'ADMIN';
+  if (payload?.role !== 'ADMIN') return null;
+  return payload;
 }
 
 export async function GET() {
-  if (!(await checkAdmin())) {
+  const admin = await getAdmin();
+  if (!admin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -41,7 +43,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!(await checkAdmin())) {
+  const admin = await getAdmin();
+  if (!admin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -65,6 +68,7 @@ export async function POST(request: Request) {
         username,
         password: hashedPassword,
         role: 'AGENT',
+        managerId: admin.id as string,
       },
     });
 

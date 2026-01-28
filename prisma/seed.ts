@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   const username = 'admin';
-  const password = 'admin123';
+  const password = 'Omega101998';
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const admin = await prisma.user.upsert({

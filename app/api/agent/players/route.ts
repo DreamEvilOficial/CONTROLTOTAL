@@ -15,7 +15,7 @@ async function getAgent() {
   const token = cookies().get('token')?.value;
   if (!token) return null;
   const payload = await verifyJWT(token);
-  if (payload?.role !== 'AGENT') return null;
+  if (payload?.role !== 'AGENT' && payload?.role !== 'ADMIN') return null;
   return payload;
 }
 
