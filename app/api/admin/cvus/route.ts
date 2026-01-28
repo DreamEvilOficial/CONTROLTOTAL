@@ -37,13 +37,14 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { bankName, alias, cbu } = cvuSchema.parse(body);
+    const { bankName, alias, cbu, holderName } = cvuSchema.parse(body);
 
     const cvu = await prisma.cvu.create({
       data: {
         bankName,
         alias,
         cbu,
+        holderName,
       },
     });
 

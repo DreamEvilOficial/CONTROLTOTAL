@@ -297,7 +297,7 @@ export default function AdminDashboard() {
         body: JSON.stringify(newCvu),
       });
       if (res.ok) {
-        setNewCvu({ bankName: '', alias: '', cbu: '' });
+        setNewCvu({ bankName: '', alias: '', cbu: '', holderName: '' });
         fetchCvus();
       }
     } catch (error) {
@@ -693,6 +693,16 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Nombre del Titular</label>
+                  <input
+                    type="text"
+                    value={newCvu.holderName || ''}
+                    onChange={(e) => setNewCvu({...newCvu, holderName: e.target.value})}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    placeholder="Ej: Juan Pérez"
+                  />
+                </div>
+                <div>
                   <label className="text-sm text-gray-400 mb-1 block">Alias</label>
                   <input
                     type="text"
@@ -734,6 +744,9 @@ export default function AdminDashboard() {
                 <div key={cvu.id} className="bg-white/5 rounded-xl p-5 border border-white/10 flex justify-between items-center group">
                   <div>
                     <h4 className="font-bold text-lg">{cvu.bankName}</h4>
+                    {cvu.holderName && (
+                      <p className="text-gray-400 text-sm font-mono mt-1">Titular: <span className="text-white">{cvu.holderName}</span></p>
+                    )}
                     <p className="text-gray-400 text-sm font-mono mt-1">Alias: <span className="text-white">{cvu.alias}</span></p>
                     <p className="text-gray-400 text-sm font-mono">CBU: <span className="text-white">{cvu.cbu}</span></p>
                   </div>

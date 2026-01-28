@@ -10,6 +10,7 @@ export default function PlayerDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState({ balance: 0, username: '' });
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [activeCvus, setActiveCvus] = useState<any[]>([]);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [amount, setAmount] = useState('');
@@ -20,6 +21,7 @@ export default function PlayerDashboard() {
   useEffect(() => {
     fetchStats();
     fetchTransactions();
+    fetchActiveCvus();
     
     // Auto-refresh every 10s for updates
     const interval = setInterval(() => {
@@ -37,6 +39,15 @@ export default function PlayerDashboard() {
   const fetchTransactions = async () => {
     const res = await fetch('/api/player/transactions');
     if (res.ok) setTransactions(await res.json());
+  };
+
+  const fetchActiveCvus = async () => {
+    try {
+      const res = await fetch('/api/cvus/active');
+      if (res.ok) setActiveCvus(await res.json());
+    } catch (error) {
+      console.error('Error fetching CVUs:', error);
+    }
   };
 
   const handleTransaction = async (type: 'DEPOSIT' | 'WITHDRAW') => {
@@ -311,48 +322,127 @@ export default function PlayerDashboard() {
         {/* Chat & Info Modal */}
         {selectedTx && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="w-full max-w-2xl glass rounded-2xl overflow-hidden flex flex-col max-h-[85vh] border border-white/10 shadow-2xl">
-              <div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/20">
+            <div className="w-full max-w-6xl glass rounded-2xl overflow-hidden flex flex-col h-[85vh] border border-white/10 shadow-2xl">
+              <div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/20 shrink-0">
                  <h3 className="font-bold text-white flex items-center gap-2">
                     <MessageCircle className="w-4 h-4 text-primary" />
-                    Chat de Transacción
+                    Detalles de la Operación
                  </h3>
                  <button onClick={() => setSelectedTx(null)} className="text-gray-400 hover:text-white transition-colors">✕</button>
               </div>
               
-              {selectedTransactionData?.expectedAmount && selectedTransactionData.status === 'PENDING' && selectedTransactionData.type === 'DEPOSIT' && (
-                <div className="bg-secondary/10 p-4 border-b border-secondary/20 text-sm">
-                  <p className="font-bold text-secondary mb-1 flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    Instrucciones de Pago Automático:
-                  </p>
-                  <p className="text-gray-300">Transfiere EXACTAMENTE <span className="text-xl font-bold text-white text-glow mx-1">${selectedTransactionData.expectedAmount.toFixed(2)}</span></p>
-                  <p className="text-gray-400 text-xs mt-2">El monto incluye centavos únicos para identificar tu pago. Se acreditará automáticamente en segundos.</p>
-                </div>
-              )}
+              <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-2">
+                {/* Left Column: Details */}
+                <div className="p-6 overflow-y-auto border-r border-white/10 bg-black/20 space-y-6">
+                  {selectedTransactionData?.type === 'DEPOSIT' && selectedTransactionData.status === 'PENDING' && (
+                    <>
+                      <div className="bg-secondary/10 p-6 rounded-xl border border-secondary/20">
+                        <p className="font-bold text-secondary mb-2 flex items-center gap-2 text-lg">
+                          <Clock className="w-5 h-5" />
+                          Instrucciones de Pago
+                        </p>
+                        <p className="text-gray-300 text-lg">Transfiere EXACTAMENTE:</p>
+                        <p className="text-4xl font-black text-white text-glow my-3 tracking-tight">
+                          ${selectedTransactionData.expectedAmount ? selectedTransactionData.expectedAmount.toFixed(2) : selectedTransactionData.amount.toLocaleString()}
+                        </p>
+                        <p className="text-gray-400 text-sm">
+                          El monto incluye centavos únicos para identificar tu pago. Se acreditará automáticamente en segundos.
+                        </p>
+                      </div>
 
-              {selectedTransactionData?.type === 'WITHDRAW' && selectedTransactionData.status === 'PENDING' && (
-                <div className="bg-yellow-500/10 p-4 border-b border-yellow-500/20 text-sm">
-                  <p className="font-bold text-yellow-500 mb-1 flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    Solicitud de Retiro en Proceso
-                  </p>
-                  <p className="text-gray-300 mb-2">Tu solicitud ha sido enviada al administrador. Por favor espera la confirmación en el chat.</p>
-                  <div className="bg-black/20 p-2 rounded text-xs text-gray-400 space-y-1">
-                     <p>Monto a recibir: <span className="text-white font-bold">${selectedTransactionData.amount}</span></p>
-                     {selectedTransactionData.withdrawalCvu && <p>CVU: {selectedTransactionData.withdrawalCvu}</p>}
-                     {selectedTransactionData.withdrawalAlias && <p>Alias: {selectedTransactionData.withdrawalAlias}</p>}
-                     {selectedTransactionData.withdrawalBank && <p>Banco: {selectedTransactionData.withdrawalBank}</p>}
+                      <div className="space-y-4">
+                        <h4 className="text-white font-bold flex items-center gap-2">
+                          <Wallet className="w-4 h-4 text-primary" />
+                          Cuentas Disponibles para Transferir
+                        </h4>
+                        {activeCvus.length > 0 ? (
+                          activeCvus.map((cvu: any) => (
+                            <div key={cvu.id} className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-3 hover:bg-white/10 transition-colors">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="p-2 rounded-lg bg-primary/20 text-primary">
+                                  <Wallet className="w-4 h-4" />
+                                </div>
+                                <span className="font-bold text-white">{cvu.bankName}</span>
+                              </div>
+                              
+                              <div className="space-y-2 text-sm">
+                                {cvu.holderName && (
+                                  <div className="flex justify-between items-center py-1 border-b border-white/5">
+                                    <span className="text-gray-400">Titular:</span>
+                                    <span className="text-white font-mono select-all text-right">{cvu.holderName}</span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between items-center py-1 border-b border-white/5">
+                                  <span className="text-gray-400">CBU/CVU:</span>
+                                  <span className="text-white font-mono select-all text-right">{cvu.cbu}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1">
+                                  <span className="text-gray-400">Alias:</span>
+                                  <span className="text-white font-mono select-all text-right">{cvu.alias}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center p-4 bg-white/5 rounded-xl border border-dashed border-white/10 text-gray-500">
+                            No hay cuentas activas disponibles. Consulta por el chat.
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {selectedTransactionData?.type === 'WITHDRAW' && selectedTransactionData.status === 'PENDING' && (
+                    <div className="bg-yellow-500/10 p-6 rounded-xl border border-yellow-500/20">
+                      <p className="font-bold text-yellow-500 mb-2 flex items-center gap-2 text-lg">
+                        <Clock className="w-5 h-5" />
+                        Solicitud de Retiro en Proceso
+                      </p>
+                      <p className="text-gray-300 mb-4">Tu solicitud ha sido enviada al administrador. Por favor espera la confirmación en el chat.</p>
+                      
+                      <div className="bg-black/20 p-4 rounded-xl space-y-3 border border-white/5">
+                         <div className="flex justify-between">
+                            <span className="text-gray-400">Monto a recibir:</span>
+                            <span className="text-white font-bold text-lg">${selectedTransactionData.amount.toLocaleString()}</span>
+                         </div>
+                         <div className="border-t border-white/10 my-2"></div>
+                         {selectedTransactionData.withdrawalCvu && (
+                            <div className="flex justify-between text-sm">
+                               <span className="text-gray-400">CVU Destino:</span>
+                               <span className="text-white">{selectedTransactionData.withdrawalCvu}</span>
+                            </div>
+                         )}
+                         {selectedTransactionData.withdrawalAlias && (
+                            <div className="flex justify-between text-sm">
+                               <span className="text-gray-400">Alias:</span>
+                               <span className="text-white">{selectedTransactionData.withdrawalAlias}</span>
+                            </div>
+                         )}
+                         {selectedTransactionData.withdrawalBank && (
+                            <div className="flex justify-between text-sm">
+                               <span className="text-gray-400">Banco:</span>
+                               <span className="text-white">{selectedTransactionData.withdrawalBank}</span>
+                            </div>
+                         )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column: Chat */}
+                <div className="flex flex-col h-full bg-black/40 border-l border-white/10">
+                  <div className="p-3 border-b border-white/10 bg-white/5 text-sm font-medium text-gray-400 flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4" />
+                    Chat con Soporte
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <ChatWindow
+                      transactionId={selectedTx}
+                      currentUserRole="PLAYER"
+                      onClose={() => setSelectedTx(null)}
+                    />
                   </div>
                 </div>
-              )}
-
-              <div className="flex-1 overflow-hidden bg-black/20">
-                <ChatWindow
-                  transactionId={selectedTx}
-                  currentUserRole="PLAYER"
-                  onClose={() => setSelectedTx(null)}
-                />
               </div>
             </div>
           </div>
