@@ -39,6 +39,7 @@ interface Transaction {
   method?: string;
   createdAt: string;
   user: {
+    id: string;
     username: string;
     name: string;
     platformUser?: string;
@@ -618,6 +619,11 @@ export default function AdminDashboard() {
           >
             <MessageCircle className="w-4 h-4" />
             Soporte
+            {conversations.reduce((acc, curr) => acc + curr.unreadCount, 0) > 0 && (
+              <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse ml-1">
+                {conversations.reduce((acc, curr) => acc + curr.unreadCount, 0)}
+              </span>
+            )}
           </button>
         </div>
 
@@ -729,9 +735,23 @@ export default function AdminDashboard() {
                                 </span>
                               </div>
                               <h4 className="font-bold text-lg">${tx.amount.toLocaleString()}</h4>
-                              <p className="text-sm text-gray-400">
-                                Usuario: <span className="text-white font-medium">{tx.user.username}</span>
-                              </p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm text-gray-400">
+                                  Usuario: <span className="text-white font-medium">{tx.user.username}</span>
+                                </p>
+                                {conversations.find(c => c.user.id === tx.user.id)?.unreadCount ? (
+                                  <button
+                                    onClick={() => {
+                                      setActiveTab('support');
+                                      setSelectedChatUser({ id: tx.user.id, username: tx.user.username });
+                                    }}
+                                    className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary text-black text-xs font-bold animate-pulse hover:bg-primary/90 transition-colors shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                                  >
+                                    <MessageCircle className="w-3 h-3" />
+                                    <span>{conversations.find(c => c.user.id === tx.user.id)?.unreadCount} nuevo(s)</span>
+                                  </button>
+                                ) : null}
+                              </div>
                               {tx.user.platform && (
                                 <p className="text-sm text-gray-400">
                                   Casino: <span className="text-white font-medium">{tx.user.platform.name}</span>

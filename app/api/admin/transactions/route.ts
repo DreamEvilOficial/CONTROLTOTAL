@@ -22,6 +22,7 @@ export async function GET() {
     include: {
       user: {
         select: {
+          id: true,
           username: true,
           name: true,
           platformUser: true,
