@@ -8,7 +8,7 @@ import SupportChat from '@/components/SupportChat';
 
 export default function PlayerDashboard() {
   const router = useRouter();
-  const [stats, setStats] = useState({ balance: 0 });
+  const [stats, setStats] = useState({ balance: 0, username: '' });
   const [transactions, setTransactions] = useState<any[]>([]);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -135,9 +135,9 @@ export default function PlayerDashboard() {
           <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
             <Wallet className="w-32 h-32 text-primary" />
           </div>
-          <h2 className="text-gray-400 text-sm uppercase tracking-wider mb-2 font-medium">Saldo Disponible</h2>
+          <h2 className="text-gray-400 text-sm uppercase tracking-wider mb-2 font-medium">Mi Usuario</h2>
           <div className="text-5xl font-black text-white mb-8 tracking-tighter text-glow">
-            ${stats.balance.toLocaleString()}
+            {stats.username}
           </div>
           <div className="flex gap-4 relative z-10">
             <button

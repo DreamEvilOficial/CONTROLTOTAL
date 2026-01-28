@@ -119,7 +119,16 @@ export default function ChatWindow({ transactionId, currentUserRole, onClose }: 
                     : 'bg-gray-200 text-gray-800'
                 }`}
               >
-                <div className="text-xs opacity-75 mb-1">{msg.sender.name}</div>
+                <div className="text-xs opacity-75 mb-1">
+                  {msg.sender.role === 'ADMIN' ? (
+                    <>
+                      <span className="text-red-600 font-bold mr-1">[SOPORTE]</span>
+                      {msg.sender.name}
+                    </>
+                  ) : (
+                    msg.sender.name
+                  )}
+                </div>
                 <div className="whitespace-pre-wrap">{msg.content}</div>
                 <div className="text-xs opacity-75 mt-1 text-right">
                   {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

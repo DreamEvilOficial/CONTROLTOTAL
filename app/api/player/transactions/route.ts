@@ -81,7 +81,7 @@ export async function POST(request: Request) {
         expectedAmount,
         type,
         userId: user.id,
-        agentId: agentId,
+        agentId: user.managerId,
         status: 'PENDING',
         withdrawalCvu,
         withdrawalAlias,

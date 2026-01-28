@@ -19,10 +19,11 @@ export async function GET() {
 
   const userData = await prisma.user.findUnique({
     where: { id: player.id as string },
-    select: { balance: true },
+    select: { balance: true, username: true },
   });
 
   return NextResponse.json({
     balance: userData?.balance || 0,
+    username: userData?.username || '',
   });
 }

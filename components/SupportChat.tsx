@@ -114,6 +114,11 @@ export default function SupportChat() {
                     : 'bg-primary text-black rounded-tr-none'
                 }`}
               >
+                {isAdmin && (
+                   <div className="text-xs mb-1 font-bold text-red-500">
+                     [SOPORTE]
+                   </div>
+                )}
                 <p>{msg.content}</p>
                 <span className="text-[10px] opacity-50 block mt-1 text-right">
                   {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
