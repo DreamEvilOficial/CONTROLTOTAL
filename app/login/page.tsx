@@ -74,15 +74,22 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-       {/* Background Effects */}
-       <div className="absolute top-0 left-0 w-full h-full bg-[url('/noise.png')] opacity-5 pointer-events-none"></div>
-       <div className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
-       <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-700"></div>
+       <div className="absolute inset-0">
+         <div className="absolute inset-0 bg-[url('/noise.png')] opacity-5"></div>
+         <div className="absolute inset-0 bg-gradient-to-br from-black via-[#0b0b0b] to-[#111]"></div>
+         <div className="absolute -top-10 left-0 right-0 h-56 opacity-20">
+           <div className="flex gap-4 justify-center">
+             <img src="https://images.pragmaticplay.com/content/games/gates-of-olympus_1080.png" alt="Pragmatic" className="h-40 w-auto object-cover rounded-xl" />
+             <img src="https://images.pragmaticplay.com/content/games/sweet-bonanza_1080.png" alt="Pragmatic" className="h-40 w-auto object-cover rounded-xl" />
+             <img src="https://images.pragmaticplay.com/content/games/starlight-princess_1080.png" alt="Pragmatic" className="h-40 w-auto object-cover rounded-xl" />
+           </div>
+         </div>
+       </div>
 
       <div className="max-w-md w-full glass rounded-2xl shadow-2xl p-8 relative z-10 border border-white/10">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-black text-white mb-2 tracking-tight">Bienvenido</h2>
-          <p className="text-gray-400">Ingresa tus credenciales para acceder</p>
+          <h2 className="text-3xl font-black text-white mb-2 tracking-tight">Cargar Fichas</h2>
+          <p className="text-gray-400">Accede para gestionar tus depósitos y jugar</p>
         </div>
 
         {error && (
@@ -174,6 +181,17 @@ export default function LoginPage() {
             )}
           </div>
         </form>
+      </div>
+      <div className="absolute bottom-4 left-0 right-0">
+        <div className="mx-auto max-w-4xl px-4">
+          <div className="flex gap-4 overflow-x-auto no-scrollbar">
+            <img src="https://images.pragmaticplay.com/content/games/dog-house_1080.png" alt="Juego" className="h-20 w-auto object-cover rounded-lg opacity-30 hover:opacity-60 transition-opacity" />
+            <img src="https://images.pragmaticplay.com/content/games/big-bass-bonanza_1080.png" alt="Juego" className="h-20 w-auto object-cover rounded-lg opacity-30 hover:opacity-60 transition-opacity" />
+            <img src="https://images.pragmaticplay.com/content/games/wild-west-gold_1080.png" alt="Juego" className="h-20 w-auto object-cover rounded-lg opacity-30 hover:opacity-60 transition-opacity" />
+            <img src="https://images.pragmaticplay.com/content/games/fruit-party_1080.png" alt="Juego" className="h-20 w-auto object-cover rounded-lg opacity-30 hover:opacity-60 transition-opacity" />
+            <img src="https://images.pragmaticplay.com/content/games/madam-destiny_1080.png" alt="Juego" className="h-20 w-auto object-cover rounded-lg opacity-30 hover:opacity-60 transition-opacity" />
+          </div>
+        </div>
       </div>
     </div>
   );

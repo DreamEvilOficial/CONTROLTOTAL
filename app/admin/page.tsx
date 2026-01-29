@@ -125,6 +125,11 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [config, setConfig] = useState<Config>({ whatsappNumber: '', mpAccessToken: '', mpPublicKey: '' });
   const [platforms, setPlatforms] = useState<Platform[]>([]);
+  const [newUsersCount, setNewUsersCount] = useState(0);
+  const [newTxCount, setNewTxCount] = useState(0);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [prevUsersLen, setPrevUsersLen] = useState(0);
+  const [prevTxLen, setPrevTxLen] = useState(0);
   
   // Forms
   const [newCvu, setNewCvu] = useState({ bankName: '', alias: '', cbu: '', holderName: '' });
@@ -153,12 +158,17 @@ export default function AdminDashboard() {
     fetchPlatforms();
     fetchUsers();
     fetchConversations();
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'granted') setNotificationsEnabled(true);
+      else Notification.requestPermission().then(p => setNotificationsEnabled(p === 'granted'));
+    }
     
     // Poll for updates every 3 seconds
     const interval = setInterval(() => {
       fetchTransactions();
       fetchStats();
       fetchActivity();
+      fetchUsers();
       fetchConversations();
       if (selectedChatUser) {
         fetchAdminMessages(selectedChatUser.id);
@@ -241,7 +251,18 @@ export default function AdminDashboard() {
   const fetchTransactions = async () => {
     try {
       const res = await fetch('/api/admin/transactions');
-      if (res.ok) setTransactions(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        setTransactions(data);
+        const len = Array.isArray(data) ? data.length : 0;
+        if (len > prevTxLen) {
+          setNewTxCount(len - prevTxLen);
+          if (notificationsEnabled) {
+            try { new Notification('Nueva petición pendiente'); } catch {}
+          }
+        }
+        setPrevTxLen(len);
+      }
     } catch (error) {
       console.error('Error fetching transactions:', error);
     }
@@ -293,7 +314,18 @@ export default function AdminDashboard() {
   const fetchUsers = async () => {
     try {
       const res = await fetch('/api/admin/users');
-      if (res.ok) setUsers(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data);
+        const len = Array.isArray(data) ? data.length : 0;
+        if (len > prevUsersLen) {
+          setNewUsersCount(len - prevUsersLen);
+          if (notificationsEnabled) {
+            try { new Notification('Nuevo jugador registrado'); } catch {}
+          }
+        }
+        setPrevUsersLen(len);
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
     }
@@ -564,6 +596,11 @@ export default function AdminDashboard() {
           >
             <BarChart3 className="w-4 h-4" />
             Resumen
+            {newTxCount > 0 && (
+              <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse ml-1">
+                {newTxCount}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab('players')}
@@ -575,6 +612,11 @@ export default function AdminDashboard() {
           >
             <Users className="w-4 h-4" />
             Jugadores
+            {newUsersCount > 0 && (
+              <span className="bg-green-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse ml-1">
+                {newUsersCount}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab('cvus')}

@@ -29,6 +29,7 @@ export default function PlayerDashboard() {
   const [withdrawDetails, setWithdrawDetails] = useState({ cvu: '', alias: '', bank: '' });
   const [selectedTx, setSelectedTx] = useState<string | null>(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
+  const [adminWhatsapp, setAdminWhatsapp] = useState<string | null>(null);
   
   // Payment Method State
   const [depositMethod, setDepositMethod] = useState<'MANUAL' | 'AUTO' | 'MP'>('MANUAL');
@@ -37,15 +38,19 @@ export default function PlayerDashboard() {
   const [loadingMp, setLoadingMp] = useState(false);
   const [copiedUser, setCopiedUser] = useState(false);
   const [copiedPass, setCopiedPass] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
 
-  const handleCopy = (text: string, type: 'user' | 'pass') => {
+  const handleCopy = (text: string, type: 'user' | 'pass' | 'url') => {
     navigator.clipboard.writeText(text);
     if (type === 'user') {
       setCopiedUser(true);
       setTimeout(() => setCopiedUser(false), 2000);
-    } else {
+    } else if (type === 'pass') {
       setCopiedPass(true);
       setTimeout(() => setCopiedPass(false), 2000);
+    } else {
+      setCopiedUrl(true);
+      setTimeout(() => setCopiedUrl(false), 2000);
     }
   };
 
@@ -60,6 +65,7 @@ export default function PlayerDashboard() {
     fetchStats();
     fetchTransactions();
     fetchActiveCvus();
+    fetch('/api/config/public').then(r => r.json()).then(d => setAdminWhatsapp(d.whatsappNumber || null)).catch(() => {});
     
     // Auto-refresh every 10s for updates
     const interval = setInterval(() => {
@@ -273,18 +279,27 @@ export default function PlayerDashboard() {
               <div className="bg-black/40 rounded-2xl p-6 border border-white/10 text-left space-y-4 shadow-inner">
                 <div className="flex justify-between items-center pb-3 border-b border-white/5">
                   <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Plataforma</span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <span className="font-bold text-primary">{stats.platformName || 'Casino'}</span>
                     {stats.platformUrl && (
-                      <a 
-                        href={stats.platformUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-400 hover:text-white transition-colors"
-                        title="Ir al sitio"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={stats.platformUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-gray-300 hover:text-white font-mono break-all max-w-[220px]"
+                          title="Abrir sitio del casino"
+                        >
+                          {stats.platformUrl}
+                        </a>
+                        <button
+                          onClick={() => handleCopy(stats.platformUrl, 'url')}
+                          className="p-1.5 bg-white/5 hover:bg-white/10 rounded-md border border-white/5 transition-colors text-gray-400 hover:text-white"
+                          title="Copiar link"
+                        >
+                          {copiedUrl ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -405,15 +420,24 @@ export default function PlayerDashboard() {
               <div className="flex flex-col items-center justify-center gap-2 order-last md:order-none w-full md:w-auto">
                 <div className="text-2xl font-bold text-white tracking-tight">{stats.platformName}</div>
                 {stats.platformUrl && (
-                    <a 
-                      href={stats.platformUrl} 
-                      target="_blank" 
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={stats.platformUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
-                      className="group flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all text-sm text-gray-300 hover:text-white"
+                      className="text-sm text-gray-300 hover:text-white font-mono break-all max-w-[280px]"
+                      title="Abrir sitio del casino"
                     >
-                      <span>Ir a la página</span>
-                      <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                      {stats.platformUrl}
                     </a>
+                    <button
+                      onClick={() => handleCopy(stats.platformUrl, 'url')}
+                      className="text-gray-500 hover:text-white transition-colors p-1 rounded hover:bg-white/5"
+                      title="Copiar link"
+                    >
+                      {copiedUrl ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                  </div>
                 )}
               </div>
             )}
@@ -466,6 +490,20 @@ export default function PlayerDashboard() {
               Retirar
             </button>
           </div>
+          {adminWhatsapp && (
+            <div className="mt-4">
+              <a
+                href={`https://wa.me/${adminWhatsapp}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 bg-[#25D366]/10 border border-[#25D366]/20 text-[#25D366] py-3 rounded-xl font-bold hover:bg-[#25D366]/20 hover:border-[#25D366]/30 transition-all"
+                title="Abrir WhatsApp del Admin"
+              >
+                <MessageCircle className="w-5 h-5" />
+                Contactar por WhatsApp
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Transactions History */}

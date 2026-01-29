@@ -8,6 +8,10 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "CargarFichasYA",
   description: "Plataforma de gestión de usuarios y agentes",
+  icons: [
+    { rel: 'icon', url: '/icon.svg' },
+    { rel: 'shortcut icon', url: '/icon.svg' }
+  ],
 };
 
 export default function RootLayout({
