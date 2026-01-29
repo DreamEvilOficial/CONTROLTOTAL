@@ -78,11 +78,6 @@ export default function LoginPage() {
          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-5"></div>
          <div className="absolute inset-0 bg-gradient-to-br from-black via-[#0b0b0b] to-[#111]"></div>
          <div className="absolute -top-10 left-0 right-0 h-56 opacity-20">
-           <div className="flex gap-4 justify-center">
-             <img src="https://images.pragmaticplay.com/content/games/gates-of-olympus_1080.png" alt="Pragmatic" className="h-40 w-auto object-cover rounded-xl" />
-             <img src="https://images.pragmaticplay.com/content/games/sweet-bonanza_1080.png" alt="Pragmatic" className="h-40 w-auto object-cover rounded-xl" />
-             <img src="https://images.pragmaticplay.com/content/games/starlight-princess_1080.png" alt="Pragmatic" className="h-40 w-auto object-cover rounded-xl" />
-           </div>
          </div>
        </div>
 
@@ -183,15 +178,6 @@ export default function LoginPage() {
         </form>
       </div>
       <div className="absolute bottom-4 left-0 right-0">
-        <div className="mx-auto max-w-4xl px-4">
-          <div className="flex gap-4 overflow-x-auto no-scrollbar">
-            <img src="https://images.pragmaticplay.com/content/games/dog-house_1080.png" alt="Juego" className="h-20 w-auto object-cover rounded-lg opacity-30 hover:opacity-60 transition-opacity" />
-            <img src="https://images.pragmaticplay.com/content/games/big-bass-bonanza_1080.png" alt="Juego" className="h-20 w-auto object-cover rounded-lg opacity-30 hover:opacity-60 transition-opacity" />
-            <img src="https://images.pragmaticplay.com/content/games/wild-west-gold_1080.png" alt="Juego" className="h-20 w-auto object-cover rounded-lg opacity-30 hover:opacity-60 transition-opacity" />
-            <img src="https://images.pragmaticplay.com/content/games/fruit-party_1080.png" alt="Juego" className="h-20 w-auto object-cover rounded-lg opacity-30 hover:opacity-60 transition-opacity" />
-            <img src="https://images.pragmaticplay.com/content/games/madam-destiny_1080.png" alt="Juego" className="h-20 w-auto object-cover rounded-lg opacity-30 hover:opacity-60 transition-opacity" />
-          </div>
-        </div>
       </div>
     </div>
   );
