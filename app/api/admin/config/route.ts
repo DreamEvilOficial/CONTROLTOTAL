@@ -10,6 +10,8 @@ const configSchema = z.object({
   mpPublicKey: z.string().optional().nullable(),
   metaAccessToken: z.string().optional().nullable(),
   metaAdAccountId: z.string().optional().nullable(),
+  metaPageId: z.string().optional().nullable(),
+  metaPixelId: z.string().optional().nullable(),
 });
 
 async function checkAdmin() {
@@ -48,10 +50,10 @@ export async function PUT(req: Request) {
 
     const config = await prisma.systemConfig.upsert({
       where: { id: 'config' },
-      update: data,
+      update: data as any,
       create: {
         id: 'config',
-        ...data,
+        ...(data as any),
       },
     });
 

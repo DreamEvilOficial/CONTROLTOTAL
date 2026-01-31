@@ -1,8 +1,12 @@
+
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyJWT } from '@/lib/jwt';
-import * as bizSdk from 'facebook-nodejs-business-sdk';
+import { MetaAdsService } from '@/lib/facebook';
 import { cookies } from 'next/headers';
+import { writeFile, unlink } from 'fs/promises';
+import { join } from 'path';
+import os from 'os';
 
 export async function POST(req: Request) {
   try {
@@ -16,36 +20,68 @@ export async function POST(req: Request) {
 
     const config = await prisma.systemConfig.findUnique({
       where: { id: 'config' },
-      select: { metaAccessToken: true, metaAdAccountId: true }
     });
 
-    if (!config?.metaAccessToken || !config?.metaAdAccountId) {
-      return NextResponse.json({ error: 'Meta Ads not configured' }, { status: 400 });
+    if (!config?.metaAccessToken || !config?.metaAdAccountId || !(config as any)?.metaPageId) {
+      return NextResponse.json({ error: 'Meta Ads not fully configured (Token, Account ID, or Page ID missing). Please configure in Settings.' }, { status: 400 });
     }
 
-    const body = await req.json();
-    const { campaignName, dailyBudget, status } = body as { campaignName: string; dailyBudget: number; status?: string };
+    const formData = await req.formData();
+    const campaignName = formData.get('campaignName') as string;
+    const dailyBudget = parseFloat(formData.get('dailyBudget') as string);
+    const status = formData.get('status') as string || 'PAUSED';
+    const targetUrl = formData.get('targetUrl') as string;
+    const primaryText = formData.get('primaryText') as string;
+    const headline = formData.get('headline') as string;
+    const imageFile = formData.get('image') as File;
 
-    const AdAccount = bizSdk.AdAccount;
-    const Campaign = bizSdk.Campaign;
+    if (!campaignName || !dailyBudget || !targetUrl || !imageFile) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
 
-    bizSdk.FacebookAdsApi.init(config.metaAccessToken);
+    // Save file temporarily
+    const buffer = Buffer.from(await imageFile.arrayBuffer());
+    const tempFilePath = join(os.tmpdir(), `${Date.now()}-${imageFile.name}`);
+    await writeFile(tempFilePath, buffer);
 
-    const account = new AdAccount(config.metaAdAccountId);
-    
-    // Crear Campaña
-    const campaign = await account.createCampaign(
-      [Campaign.Fields.id],
-      {
-        [Campaign.Fields.name]: campaignName,
-        [Campaign.Fields.objective]: 'OUTCOME_TRAFFIC', // Objetivo genérico
-        [Campaign.Fields.status]: status || 'PAUSED',
-        [Campaign.Fields.special_ad_categories]: [],
-        // daily_budget requiere bid strategy, simplificamos para el ejemplo
-      }
-    );
+    const adsService = new MetaAdsService(config.metaAccessToken, config.metaAdAccountId);
 
-    return NextResponse.json({ success: true, campaignId: campaign.id });
+    try {
+      // 1. Create Campaign
+      const campaign = await adsService.createCampaign(campaignName, 'OUTCOME_TRAFFIC', status);
+
+      // 2. Create Ad Set
+      const adSet = await adsService.createAdSet(
+        campaign.id,
+        `${campaignName} - AdSet`,
+        dailyBudget,
+        {}, // Default targeting
+        status
+      );
+
+      // 3. Upload Image
+      const imageHash = await adsService.uploadImage(tempFilePath);
+      if (!imageHash) throw new Error('Failed to upload image');
+
+      // 4. Create Creative
+      const creative = await adsService.createAdCreative(
+        `${campaignName} - Creative`,
+        imageHash,
+        headline || campaignName,
+        primaryText || '',
+        targetUrl,
+        (config as any).metaPageId
+      );
+
+      // 5. Create Ad
+      const ad = await adsService.createAd(adSet.id, creative.id, `${campaignName} - Ad`, status);
+
+      return NextResponse.json({ success: true, campaignId: campaign.id, adId: ad.id });
+
+    } finally {
+      // Clean up temp file
+      await unlink(tempFilePath).catch(console.error);
+    }
 
   } catch (error: any) {
     console.error('Meta Ads Error:', error);

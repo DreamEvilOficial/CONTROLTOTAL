@@ -2,14 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Users, 
-  CreditCard, 
-  BarChart3, 
-  LogOut, 
-  Shield, 
+import {
+  Users,
+  CreditCard,
+  BarChart3,
+  LogOut,
+  Shield,
   Search,
-  Banknote, 
+  Banknote,
   Activity,
   CheckCircle2,
   XCircle,
@@ -27,7 +27,8 @@ import {
   X,
   RefreshCw,
   Edit,
-  Key
+  Key,
+  Megaphone
 } from 'lucide-react';
 import MarketingTab from '@/components/MarketingTab';
 
@@ -130,7 +131,7 @@ export default function AdminDashboard() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [prevUsersLen, setPrevUsersLen] = useState(0);
   const [prevTxLen, setPrevTxLen] = useState(0);
-  
+
   // Forms
   const [newCvu, setNewCvu] = useState({ bankName: '', alias: '', cbu: '', holderName: '' });
   const [newPlatform, setNewPlatform] = useState({ name: '', url: '', bonus: '' });
@@ -162,7 +163,7 @@ export default function AdminDashboard() {
       if (Notification.permission === 'granted') setNotificationsEnabled(true);
       else Notification.requestPermission().then(p => setNotificationsEnabled(p === 'granted'));
     }
-    
+
     // Poll for updates every 3 seconds
     const interval = setInterval(() => {
       fetchTransactions();
@@ -258,7 +259,7 @@ export default function AdminDashboard() {
         if (len > prevTxLen) {
           setNewTxCount(len - prevTxLen);
           if (notificationsEnabled) {
-            try { new Notification('Nueva petición pendiente'); } catch {}
+            try { new Notification('Nueva petición pendiente'); } catch { }
           }
         }
         setPrevTxLen(len);
@@ -321,7 +322,7 @@ export default function AdminDashboard() {
         if (len > prevUsersLen) {
           setNewUsersCount(len - prevUsersLen);
           if (notificationsEnabled) {
-            try { new Notification('Nuevo jugador registrado'); } catch {}
+            try { new Notification('Nuevo jugador registrado'); } catch { }
           }
         }
         setPrevUsersLen(len);
@@ -407,7 +408,7 @@ export default function AdminDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: action }),
       });
-      
+
       if (res.ok) {
         fetchTransactions();
         fetchStats();
@@ -425,7 +426,7 @@ export default function AdminDashboard() {
     try {
       const res = await fetch(`/api/transactions/${txId}/check-mp`, { method: 'POST' });
       const data = await res.json();
-      
+
       if (data.status === 'COMPLETED') {
         alert('¡Pago verificado y aprobado automáticamente!');
         fetchTransactions();
@@ -572,8 +573,8 @@ export default function AdminDashboard() {
               <p className="text-xs text-gray-400">Gestión global de la plataforma</p>
             </div>
           </div>
-          
-          <button 
+
+          <button
             onClick={handleLogout}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all text-sm font-medium"
           >
@@ -588,11 +589,10 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-2 p-1 bg-white/5 rounded-xl w-fit flex-wrap">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-              activeTab === 'overview' 
-                ? 'bg-primary text-black shadow-lg shadow-primary/20' 
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'overview'
+                ? 'bg-primary text-black shadow-lg shadow-primary/20'
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
-            }`}
+              }`}
           >
             <BarChart3 className="w-4 h-4" />
             Resumen
@@ -604,11 +604,10 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('players')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-              activeTab === 'players' 
-                ? 'bg-primary text-black shadow-lg shadow-primary/20' 
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'players'
+                ? 'bg-primary text-black shadow-lg shadow-primary/20'
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
-            }`}
+              }`}
           >
             <Users className="w-4 h-4" />
             Jugadores
@@ -620,44 +619,50 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('cvus')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-              activeTab === 'cvus' 
-                ? 'bg-primary text-black shadow-lg shadow-primary/20' 
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'cvus'
+                ? 'bg-primary text-black shadow-lg shadow-primary/20'
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
-            }`}
+              }`}
           >
             <CreditCard className="w-4 h-4" />
             CVUs / Pagos
           </button>
           <button
-            onClick={() => setActiveTab('config')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-              activeTab === 'config' 
-                ? 'bg-primary text-black shadow-lg shadow-primary/20' 
+            onClick={() => setActiveTab('marketing')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'marketing'
+                ? 'bg-primary text-black shadow-lg shadow-primary/20'
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
-            }`}
+              }`}
+          >
+            <Megaphone className="w-4 h-4" />
+            Marketing
+          </button>
+          <button
+            onClick={() => setActiveTab('config')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'config'
+                ? 'bg-primary text-black shadow-lg shadow-primary/20'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
           >
             <Settings className="w-4 h-4" />
             Configuración
           </button>
           <button
             onClick={() => setActiveTab('platforms')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-              activeTab === 'platforms' 
-                ? 'bg-primary text-black shadow-lg shadow-primary/20' 
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'platforms'
+                ? 'bg-primary text-black shadow-lg shadow-primary/20'
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
-            }`}
+              }`}
           >
             <Gamepad2 className="w-4 h-4" />
             Plataformas
           </button>
           <button
             onClick={() => setActiveTab('support')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-              activeTab === 'support' 
-                ? 'bg-primary text-black shadow-lg shadow-primary/20' 
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'support'
+                ? 'bg-primary text-black shadow-lg shadow-primary/20'
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
-            }`}
+              }`}
           >
             <MessageCircle className="w-4 h-4" />
             Soporte
@@ -755,16 +760,14 @@ export default function AdminDashboard() {
                       <div key={tx.id} className="bg-white/5 rounded-xl p-5 border border-white/5 hover:border-primary/20 transition-all">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                           <div className="flex items-start gap-4">
-                            <div className={`p-3 rounded-full ${
-                              tx.type === 'DEPOSIT' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
-                            }`}>
+                            <div className={`p-3 rounded-full ${tx.type === 'DEPOSIT' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                              }`}>
                               {tx.type === 'DEPOSIT' ? <TrendingUp className="w-5 h-5" /> : <Banknote className="w-5 h-5" />}
                             </div>
                             <div>
                               <div className="flex items-center gap-2 mb-1">
-                                <span className={`text-xs font-bold px-2 py-0.5 rounded uppercase ${
-                                  tx.type === 'DEPOSIT' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
-                                }`}>
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded uppercase ${tx.type === 'DEPOSIT' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                                  }`}>
                                   {tx.type === 'DEPOSIT' ? 'Depósito' : 'Retiro'}
                                 </span>
                                 {tx.method && (
@@ -811,7 +814,7 @@ export default function AdminDashboard() {
                               )}
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-3 w-full md:w-auto">
                             {tx.type === 'DEPOSIT' && (
                               <button
@@ -854,24 +857,24 @@ export default function AdminDashboard() {
                   <Activity className="w-6 h-6 text-primary" />
                   Historial
                 </h2>
-                
+
                 <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-6 sticky top-24">
                   {activity ? (
                     <>
-                      <ActivityCard 
-                        title="Hoy" 
-                        data={activity.day} 
-                        icon={Clock} 
+                      <ActivityCard
+                        title="Hoy"
+                        data={activity.day}
+                        icon={Clock}
                       />
-                      <ActivityCard 
-                        title="Esta Semana" 
-                        data={activity.week} 
-                        icon={Calendar} 
+                      <ActivityCard
+                        title="Esta Semana"
+                        data={activity.week}
+                        icon={Calendar}
                       />
-                      <ActivityCard 
-                        title="Este Mes" 
-                        data={activity.month} 
-                        icon={BarChart3} 
+                      <ActivityCard
+                        title="Este Mes"
+                        data={activity.month}
+                        icon={BarChart3}
                       />
                     </>
                   ) : (
@@ -898,7 +901,7 @@ export default function AdminDashboard() {
                     type="text"
                     required
                     value={newUser.username}
-                    onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                    onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                     placeholder="Usuario"
                   />
@@ -909,7 +912,7 @@ export default function AdminDashboard() {
                     type="password"
                     required
                     value={newUser.password}
-                    onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                     placeholder="Contraseña"
                   />
@@ -920,7 +923,7 @@ export default function AdminDashboard() {
                     type="text"
                     required
                     value={newUser.name}
-                    onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                     placeholder="Nombre Completo"
                   />
@@ -930,7 +933,7 @@ export default function AdminDashboard() {
                   <input
                     type="text"
                     value={newUser.whatsapp}
-                    onChange={(e) => setNewUser({...newUser, whatsapp: e.target.value})}
+                    onChange={(e) => setNewUser({ ...newUser, whatsapp: e.target.value })}
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                     placeholder="+54911..."
                   />
@@ -968,7 +971,7 @@ export default function AdminDashboard() {
                             <MessageCircle className="w-3 h-3" /> {user.whatsapp}
                           </p>
                         )}
-                        
+
                         <div className="mt-3 p-3 bg-black/20 rounded-lg border border-white/5 text-sm">
                           <p className="text-gray-400 mb-1">Plataforma: <span className="text-white font-medium">{user.platform?.name || 'No asignada'}</span></p>
                           {user.platformUser ? (
@@ -990,7 +993,7 @@ export default function AdminDashboard() {
                           )}
                         </div>
                       </div>
-                      
+
                       <button
                         onClick={() => setEditingUser(user)}
                         className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-primary transition-colors"
@@ -1028,23 +1031,23 @@ export default function AdminDashboard() {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              
+
               <form onSubmit={updateUser} className="space-y-4">
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">WhatsApp</label>
                   <input
                     type="text"
                     value={editingUser.whatsapp || ''}
-                    onChange={(e) => setEditingUser({...editingUser, whatsapp: e.target.value})}
+                    onChange={(e) => setEditingUser({ ...editingUser, whatsapp: e.target.value })}
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                   />
                 </div>
-                
+
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Plataforma</label>
                   <select
                     value={editingUser.platformId || ''}
-                    onChange={(e) => setEditingUser({...editingUser, platformId: e.target.value})}
+                    onChange={(e) => setEditingUser({ ...editingUser, platformId: e.target.value })}
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                   >
                     <option value="">Seleccionar Plataforma</option>
@@ -1065,7 +1068,7 @@ export default function AdminDashboard() {
                       <input
                         type="text"
                         value={editingUser.platformUser || ''}
-                        onChange={(e) => setEditingUser({...editingUser, platformUser: e.target.value})}
+                        onChange={(e) => setEditingUser({ ...editingUser, platformUser: e.target.value })}
                         className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                         placeholder="Usuario asignado"
                       />
@@ -1075,7 +1078,7 @@ export default function AdminDashboard() {
                       <input
                         type="text"
                         value={editingUser.platformPassword || ''}
-                        onChange={(e) => setEditingUser({...editingUser, platformPassword: e.target.value})}
+                        onChange={(e) => setEditingUser({ ...editingUser, platformPassword: e.target.value })}
                         className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                         placeholder="Contraseña asignada"
                       />
@@ -1119,7 +1122,7 @@ export default function AdminDashboard() {
                     type="text"
                     required
                     value={newCvu.bankName}
-                    onChange={(e) => setNewCvu({...newCvu, bankName: e.target.value})}
+                    onChange={(e) => setNewCvu({ ...newCvu, bankName: e.target.value })}
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                     placeholder="Ej: MercadoPago, Brubank"
                   />
@@ -1129,7 +1132,7 @@ export default function AdminDashboard() {
                   <input
                     type="text"
                     value={newCvu.holderName || ''}
-                    onChange={(e) => setNewCvu({...newCvu, holderName: e.target.value})}
+                    onChange={(e) => setNewCvu({ ...newCvu, holderName: e.target.value })}
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                     placeholder="Ej: Juan Pérez"
                   />
@@ -1140,7 +1143,7 @@ export default function AdminDashboard() {
                     type="text"
                     required
                     value={newCvu.alias}
-                    onChange={(e) => setNewCvu({...newCvu, alias: e.target.value})}
+                    onChange={(e) => setNewCvu({ ...newCvu, alias: e.target.value })}
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                     placeholder="mi.alias.mp"
                   />
@@ -1151,7 +1154,7 @@ export default function AdminDashboard() {
                     type="text"
                     required
                     value={newCvu.cbu}
-                    onChange={(e) => setNewCvu({...newCvu, cbu: e.target.value})}
+                    onChange={(e) => setNewCvu({ ...newCvu, cbu: e.target.value })}
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                     placeholder="0000000000000000000000"
                   />
@@ -1210,7 +1213,7 @@ export default function AdminDashboard() {
                   <input
                     type="text"
                     value={config.whatsappNumber}
-                    onChange={(e) => setConfig({...config, whatsappNumber: e.target.value})}
+                    onChange={(e) => setConfig({ ...config, whatsappNumber: e.target.value })}
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                     placeholder="Ej: 5491112345678"
                   />
@@ -1225,7 +1228,7 @@ export default function AdminDashboard() {
                       <input
                         type="password"
                         value={config.mpAccessToken}
-                        onChange={(e) => setConfig({...config, mpAccessToken: e.target.value})}
+                        onChange={(e) => setConfig({ ...config, mpAccessToken: e.target.value })}
                         className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                         placeholder="APP_USR-..."
                       />
@@ -1235,7 +1238,7 @@ export default function AdminDashboard() {
                       <input
                         type="text"
                         value={config.mpPublicKey}
-                        onChange={(e) => setConfig({...config, mpPublicKey: e.target.value})}
+                        onChange={(e) => setConfig({ ...config, mpPublicKey: e.target.value })}
                         className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                         placeholder="APP_USR-..."
                       />
@@ -1271,7 +1274,7 @@ export default function AdminDashboard() {
                     type="text"
                     required
                     value={newPlatform.name}
-                    onChange={(e) => setNewPlatform({...newPlatform, name: e.target.value})}
+                    onChange={(e) => setNewPlatform({ ...newPlatform, name: e.target.value })}
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                     placeholder="Ej: Casino Royal"
                   />
@@ -1281,7 +1284,7 @@ export default function AdminDashboard() {
                   <input
                     type="url"
                     value={newPlatform.url || ''}
-                    onChange={(e) => setNewPlatform({...newPlatform, url: e.target.value})}
+                    onChange={(e) => setNewPlatform({ ...newPlatform, url: e.target.value })}
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
                     placeholder="https://..."
                   />
@@ -1291,7 +1294,7 @@ export default function AdminDashboard() {
                   <textarea
                     required
                     value={newPlatform.bonus}
-                    onChange={(e) => setNewPlatform({...newPlatform, bonus: e.target.value})}
+                    onChange={(e) => setNewPlatform({ ...newPlatform, bonus: e.target.value })}
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none min-h-[100px]"
                     placeholder="Ej: 100% hasta $50.000 + 50 Giros Gratis"
                   />
@@ -1317,10 +1320,10 @@ export default function AdminDashboard() {
                   <div>
                     <h4 className="font-bold text-lg">{platform.name}</h4>
                     {platform.url && (
-                      <a 
-                        href={platform.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                      <a
+                        href={platform.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="text-primary hover:underline text-sm block mt-1"
                       >
                         {platform.url}
@@ -1369,9 +1372,8 @@ export default function AdminDashboard() {
                         setSelectedChatUser(conv.user);
                         fetchAdminMessages(conv.user.id);
                       }}
-                      className={`w-full p-4 border-b border-white/5 text-left transition-colors hover:bg-white/5 flex items-start gap-3 ${
-                        selectedChatUser?.id === conv.user.id ? 'bg-white/10' : ''
-                      }`}
+                      className={`w-full p-4 border-b border-white/5 text-left transition-colors hover:bg-white/5 flex items-start gap-3 ${selectedChatUser?.id === conv.user.id ? 'bg-white/10' : ''
+                        }`}
                     >
                       <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">
                         {conv.user.username.substring(0, 2).toUpperCase()}
@@ -1414,7 +1416,7 @@ export default function AdminDashboard() {
                       {selectedChatUser.username}
                     </h3>
                   </div>
-                  
+
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {adminMessages.map((msg) => (
                       <div
@@ -1422,11 +1424,10 @@ export default function AdminDashboard() {
                         className={`flex ${msg.sender.role === 'ADMIN' ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-[80%] p-3 rounded-2xl ${
-                            msg.sender.role === 'ADMIN'
+                          className={`max-w-[80%] p-3 rounded-2xl ${msg.sender.role === 'ADMIN'
                               ? 'bg-primary text-black rounded-tr-none'
                               : 'bg-white/10 text-white rounded-tl-none'
-                          }`}
+                            }`}
                         >
                           <p className="text-sm">{msg.content}</p>
                           <span className="text-[10px] opacity-50 block mt-1">
