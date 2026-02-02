@@ -54,13 +54,15 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { amount, type, method, withdrawalCvu, withdrawalAlias, withdrawalBank } = z.object({
+    const { amount, type, method, withdrawalCvu, withdrawalAlias, withdrawalBank, withdrawalHolder, userBonusId } = z.object({
       amount: z.number().positive(),
       type: z.enum(['DEPOSIT', 'WITHDRAW']),
       method: z.enum(['MANUAL', 'AUTO', 'MP']).optional(),
       withdrawalCvu: z.string().optional(),
       withdrawalAlias: z.string().optional(),
       withdrawalBank: z.string().optional(),
+      withdrawalHolder: z.string().optional(),
+      userBonusId: z.string().optional(),
     }).parse(body);
 
     const user = await prisma.user.findUnique({
@@ -72,6 +74,22 @@ export async function POST(request: Request) {
 
     if (type === 'WITHDRAW' && user.balance < amount) {
       return NextResponse.json({ error: 'Saldo insuficiente' }, { status: 400 });
+    }
+
+    // Verify Bonus if provided
+    if (userBonusId) {
+      const userBonus = await prisma.userBonus.findUnique({
+        where: { id: userBonusId },
+        include: { bonus: true }
+      });
+
+      if (!userBonus || userBonus.userId !== user.id) {
+        return NextResponse.json({ error: 'Bono inválido' }, { status: 400 });
+      }
+
+      if (userBonus.status !== 'CLAIMED') {
+        return NextResponse.json({ error: 'El bono ya fue utilizado o expiró' }, { status: 400 });
+      }
     }
 
     // Allow transaction even without manager if system config exists (users might be direct)
@@ -113,19 +131,38 @@ export async function POST(request: Request) {
       }
     }
 
-    const transaction = await prisma.transaction.create({
-      data: {
-        amount,
-        expectedAmount,
-        type,
-        method,
-        userId: user.id,
-        agentId: user.managerId, // Can be null if using system config
-        status: 'PENDING',
-        withdrawalCvu,
-        withdrawalAlias,
-        withdrawalBank,
-      } as any,
+    // Use transaction to ensure consistency
+    const transaction = await prisma.$transaction(async (tx) => {
+      // Create transaction
+      const newTx = await tx.transaction.create({
+        data: {
+          amount,
+          expectedAmount,
+          type,
+          method,
+          userId: user.id,
+          agentId: user.managerId, // Can be null if using system config
+          status: 'PENDING',
+          withdrawalCvu,
+          withdrawalAlias,
+          withdrawalBank,
+          withdrawalHolder,
+          userBonusId,
+        } as any,
+      });
+
+      // Update bonus status if used
+      if (userBonusId) {
+        await tx.userBonus.update({
+          where: { id: userBonusId },
+          data: { 
+            status: 'USED',
+            usedAt: new Date()
+          }
+        });
+      }
+
+      return newTx;
     });
 
     console.log(`[TRANSACTION CREATED] ID: ${transaction.id}, User: ${user.username}, Amount: ${amount}, Type: ${type}, Method: ${method || 'N/A'}, Expected: ${expectedAmount}`);

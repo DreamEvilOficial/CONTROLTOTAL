@@ -3,7 +3,7 @@
 import { useEffect, useState, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, Wallet, ArrowUpCircle, ArrowDownCircle, History, MessageCircle, CheckCircle, Clock, XCircle, RefreshCw, Key, Lock, ExternalLink, Copy, Check, ShieldCheck, Zap, Coins } from 'lucide-react';
+import { LogOut, Wallet, ArrowUpCircle, ArrowDownCircle, History, MessageCircle, CheckCircle, Clock, XCircle, RefreshCw, Key, Lock, ExternalLink, Copy, Check, ShieldCheck, Zap, Coins, Download, Smartphone, Globe, HelpCircle, CreditCard, User, ChevronRight, ChevronLeft } from 'lucide-react';
 import ChatWindow from '@/components/ChatWindow';
 import SupportChat from '@/components/SupportChat';
 
@@ -21,13 +21,18 @@ export default function PlayerDashboard() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [activeCvus, setActiveCvus] = useState<any[]>([]);
+  const [bonuses, setBonuses] = useState<any[]>([]);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ password: '', confirmPassword: '' });
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [amount, setAmount] = useState('');
-  const [withdrawDetails, setWithdrawDetails] = useState({ cvu: '', alias: '', bank: '' });
+  
+  // Withdrawal State
+  const [withdrawType, setWithdrawType] = useState<'CVU' | 'ALIAS'>('CVU');
+  const [withdrawDetails, setWithdrawDetails] = useState({ cvu: '', alias: '', holderName: '' });
+  
   const [selectedTx, setSelectedTx] = useState<string | null>(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [adminWhatsapp, setAdminWhatsapp] = useState<string | null>(null);
@@ -40,6 +45,11 @@ export default function PlayerDashboard() {
   const [copiedUser, setCopiedUser] = useState(false);
   const [copiedPass, setCopiedPass] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
+
+  // Tutorial & Install State
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(0);
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   const handleCopy = (text: string, type: 'user' | 'pass' | 'url') => {
     navigator.clipboard.writeText(text);
@@ -66,12 +76,14 @@ export default function PlayerDashboard() {
     fetchStats();
     fetchTransactions();
     fetchActiveCvus();
+    fetchBonuses();
     fetch('/api/config/public').then(r => r.json()).then(d => setAdminWhatsapp(d.whatsappNumber || null)).catch(() => {});
     
     // Auto-refresh every 10s for updates
     const interval = setInterval(() => {
       fetchTransactions();
       fetchStats();
+      fetchBonuses();
     }, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -84,6 +96,15 @@ export default function PlayerDashboard() {
       console.error('Error fetching stats:', error);
     } finally {
       setLoadingStats(false);
+    }
+  };
+
+  const fetchBonuses = async () => {
+    try {
+      const res = await fetch('/api/player/bonuses');
+      if (res.ok) setBonuses(await res.json());
+    } catch (error) {
+      console.error('Error fetching bonuses:', error);
     }
   };
 
@@ -127,10 +148,38 @@ export default function PlayerDashboard() {
       return;
     }
 
+    if (type === 'WITHDRAW') {
+        if (withdrawType === 'CVU' && !withdrawDetails.cvu) {
+            alert('Ingresa el CVU/CBU');
+            return;
+        }
+        if (withdrawType === 'ALIAS' && !withdrawDetails.alias) {
+            alert('Ingresa el Alias');
+            return;
+        }
+        if (!withdrawDetails.holderName) {
+            alert('Ingresa el nombre del titular');
+            return;
+        }
+    }
+
+    const activeBonus = bonuses.find(b => b.userStatus === 'CLAIMED');
+    const userBonusId = type === 'DEPOSIT' ? activeBonus?.userBonusId : undefined;
+
     const res = await fetch('/api/player/transactions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: parseFloat(amount), type }),
+      body: JSON.stringify({ 
+        amount: parseFloat(amount), 
+        type,
+        userBonusId,
+        // Send withdrawal details if applicable
+        ...(type === 'WITHDRAW' ? {
+            withdrawalCvu: withdrawType === 'CVU' ? withdrawDetails.cvu : undefined,
+            withdrawalAlias: withdrawType === 'ALIAS' ? withdrawDetails.alias : undefined,
+            withdrawalHolder: withdrawDetails.holderName
+        } : {})
+      }),
     });
 
     if (res.ok) {
@@ -138,7 +187,9 @@ export default function PlayerDashboard() {
       setAmount('');
       setShowDepositModal(false);
       setShowWithdrawModal(false);
+      setWithdrawDetails({ cvu: '', alias: '', holderName: '' });
       fetchTransactions();
+      fetchBonuses(); // Refresh bonuses to show used status
       
       // Open chat automatically for deposits
       if (type === 'DEPOSIT') {
@@ -223,6 +274,8 @@ export default function PlayerDashboard() {
       const res = await fetch('/api/player/onboarding', { method: 'POST' });
       if (res.ok) {
         setStats(prev => ({ ...prev, onboardingCompleted: true }));
+        // Show tutorial immediately after onboarding
+        setShowTutorial(true);
       }
     } catch (error) {
       console.error('Error completing onboarding:', error);
@@ -385,6 +438,15 @@ export default function PlayerDashboard() {
             <span className="text-primary">CARGAR</span>FICHAS YA!
           </h1>
           <div className="flex gap-2">
+            <button
+                onClick={() => setShowInstallModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-xl hover:bg-primary/20 transition-all text-sm font-bold animate-pulse"
+                title="Instalar App"
+                id="install-btn"
+            >
+                <Download className="w-4 h-4" />
+                <span className="hidden md:inline">Instalar App</span>
+            </button>
             <button 
               onClick={() => setShowPasswordModal(true)} 
               className="flex items-center gap-2 px-4 py-2 bg-white/5 text-gray-300 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-sm"
@@ -484,8 +546,76 @@ export default function PlayerDashboard() {
             )}
           </div>
 
+          {/* Available Bonuses */}
+          <div className="glass rounded-2xl p-6 mb-8 border border-white/10 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-5">
+              <Zap className="w-24 h-24 text-yellow-400" />
+            </div>
+            <div className="relative z-10">
+              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <Zap className="w-6 h-6 text-yellow-400" />
+                Bonificaciones Disponibles
+              </h2>
+              
+              {bonuses.length === 0 ? (
+                 <p className="text-gray-400 text-sm">No hay bonos disponibles en este momento.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {bonuses.map((bonus) => {
+                     const isClaimed = bonus.userStatus === 'CLAIMED';
+                     const isUsed = bonus.userStatus === 'USED';
+                     
+                     return (
+                       <div key={bonus.id} className={`p-4 rounded-xl border transition-all ${
+                         isClaimed 
+                           ? 'bg-yellow-500/10 border-yellow-500/30' 
+                           : isUsed 
+                             ? 'bg-white/5 border-white/5 opacity-50' 
+                             : 'bg-white/5 border-white/10 hover:border-primary/30'
+                       }`}>
+                         <div className="flex justify-between items-start mb-2">
+                           <h3 className="font-bold text-white">{bonus.title}</h3>
+                           {isClaimed && <span className="px-2 py-1 rounded-md bg-yellow-500/20 text-yellow-400 text-xs font-bold border border-yellow-500/20">ACTIVO</span>}
+                           {isUsed && <span className="px-2 py-1 rounded-md bg-gray-500/20 text-gray-400 text-xs font-bold border border-gray-500/20">USADO</span>}
+                         </div>
+                         <p className="text-sm text-gray-400 mb-3">{bonus.description}</p>
+                         <div className="flex justify-between items-center">
+                           <span className="text-2xl font-black text-white">
+                             {bonus.type === 'PERCENTAGE' ? `${bonus.amount}%` : `$${bonus.amount}`}
+                           </span>
+                           {!isClaimed && !isUsed && (
+                             <button 
+                               onClick={async () => {
+                                 const res = await fetch('/api/player/bonuses', {
+                                   method: 'POST',
+                                   headers: {'Content-Type': 'application/json'},
+                                   body: JSON.stringify({ bonusId: bonus.id })
+                                 });
+                                 if(res.ok) {
+                                   fetchBonuses();
+                                   alert('¡Bono reclamado! Se aplicará en tu próximo depósito.');
+                                 } else {
+                                   const err = await res.json();
+                                   alert(err.error || 'Error al reclamar bono');
+                                 }
+                               }}
+                               className="px-4 py-2 bg-primary text-black rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors"
+                             >
+                               Reclamar
+                             </button>
+                           )}
+                         </div>
+                       </div>
+                     );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="flex gap-4 relative z-10">
             <button
+              id="deposit-btn"
               onClick={() => setShowDepositModal(true)}
               className="flex-1 bg-primary hover:bg-primary/90 text-black py-4 rounded-xl font-bold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
             >
@@ -493,6 +623,7 @@ export default function PlayerDashboard() {
               Depositar
             </button>
             <button
+              id="withdraw-btn"
               onClick={() => setShowWithdrawModal(true)}
               className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white py-4 rounded-xl font-bold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 backdrop-blur-sm"
             >
@@ -620,42 +751,6 @@ export default function PlayerDashboard() {
           </div>
         </div>
 
-        {/* Provider Logos */}
-        <div className="mb-12 text-center">
-           <h3 className="text-gray-500 text-xs uppercase tracking-[0.2em] mb-8 font-medium">Proveedores Oficiales</h3>
-           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-              <a href="https://www.pragmaticplay.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-primary transition-colors tracking-tight">PRAGMATIC PLAY</a>
-              <a href="https://rubyplay.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-red-500 transition-colors tracking-tight">RubyPlay</a>
-              <a href="https://www.evolution.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-blue-400 transition-colors tracking-tight">EVOLUTION</a>
-              <a href="https://www.playtech.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-blue-600 transition-colors tracking-tight">playtech</a>
-           </div>
-        </div>
-
-        {/* Security Modules */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-           <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
-                <ShieldCheck className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">Seguridad Total</h3>
-              <p className="text-gray-400 leading-relaxed">Garantía de anonimato absoluto y protección de datos con encriptación de grado militar.</p>
-           </div>
-           <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
-                <Zap className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">Pagos Flash</h3>
-              <p className="text-gray-400 leading-relaxed">Procesamiento instantáneo. Tus fichas se acreditan en segundos, sin esperas.</p>
-           </div>
-           <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
-                <Coins className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">Venta Optimizada</h3>
-              <p className="text-gray-400 leading-relaxed">Sistema inteligente de gestión de fichas para una experiencia de juego fluida.</p>
-           </div>
-        </div>
-
         {/* WhatsApp Quick Contact */}
         <div className="glass rounded-2xl p-8 md:p-12 text-center relative overflow-hidden mb-8">
            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
@@ -710,29 +805,96 @@ export default function PlayerDashboard() {
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)}
               />
 
+              {showDepositModal && bonuses.find(b => b.userStatus === 'CLAIMED') && (
+                (() => {
+                  const activeBonus = bonuses.find(b => b.userStatus === 'CLAIMED');
+                  const val = parseFloat(amount || '0');
+                  const bonusAmount = activeBonus.type === 'PERCENTAGE' 
+                    ? val * (activeBonus.amount / 100) 
+                    : activeBonus.amount;
+                  
+                  return (
+                    <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl animate-in fade-in slide-in-from-top-2">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-yellow-400 font-bold flex items-center gap-2">
+                          <Zap className="w-4 h-4" /> Bono Activo
+                        </span>
+                        <span className="text-white font-bold">{activeBonus.title}</span>
+                      </div>
+                      
+                      {val > 0 && (
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between text-gray-400">
+                            <span>Depósito:</span>
+                            <span>${val.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-yellow-400 font-medium">
+                            <span>Bonus ({activeBonus.type === 'PERCENTAGE' ? `${activeBonus.amount}%` : `$${activeBonus.amount}`}):</span>
+                            <span>+${bonusAmount.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-white font-bold border-t border-white/10 pt-2 mt-2">
+                            <span>Total a recibir:</span>
+                            <span>${(val + bonusAmount).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()
+              )}
+
               {showWithdrawModal && (
                 <div className="space-y-4 mb-6">
                   <p className="text-sm text-gray-400">Datos para recibir la transferencia:</p>
+                  
+                  {/* Account Type Selector */}
+                  <div className="flex gap-2 mb-2">
+                    <button 
+                        onClick={() => setWithdrawType('CVU')}
+                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                            withdrawType === 'CVU' 
+                                ? 'bg-primary text-black' 
+                                : 'bg-white/5 text-gray-400 hover:text-white'
+                        }`}
+                    >
+                        CVU / CBU
+                    </button>
+                    <button 
+                        onClick={() => setWithdrawType('ALIAS')}
+                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                            withdrawType === 'ALIAS' 
+                                ? 'bg-primary text-black' 
+                                : 'bg-white/5 text-gray-400 hover:text-white'
+                        }`}
+                    >
+                        ALIAS
+                    </button>
+                  </div>
+
+                  {withdrawType === 'CVU' ? (
+                      <input
+                        type="text"
+                        placeholder="CVU / CBU (22 dígitos)"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
+                        value={withdrawDetails.cvu}
+                        onChange={(e) => setWithdrawDetails({...withdrawDetails, cvu: e.target.value})}
+                      />
+                  ) : (
+                      <input
+                        type="text"
+                        placeholder="Alias"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
+                        value={withdrawDetails.alias}
+                        onChange={(e) => setWithdrawDetails({...withdrawDetails, alias: e.target.value})}
+                      />
+                  )}
+                  
                   <input
                     type="text"
-                    placeholder="CVU / CBU"
+                    placeholder="Titular de la cuenta"
                     className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
-                    value={withdrawDetails.cvu}
-                    onChange={(e) => setWithdrawDetails({...withdrawDetails, cvu: e.target.value})}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Alias"
-                    className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
-                    value={withdrawDetails.alias}
-                    onChange={(e) => setWithdrawDetails({...withdrawDetails, alias: e.target.value})}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Nombre del Banco / Billetera"
-                    className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
-                    value={withdrawDetails.bank}
-                    onChange={(e) => setWithdrawDetails({...withdrawDetails, bank: e.target.value})}
+                    value={withdrawDetails.holderName}
+                    onChange={(e) => setWithdrawDetails({...withdrawDetails, holderName: e.target.value})}
                   />
                 </div>
               )}
@@ -931,7 +1093,7 @@ export default function PlayerDashboard() {
                          )}
                          {selectedTransactionData.withdrawalBank && (
                             <div className="flex justify-between text-sm">
-                               <span className="text-gray-400">Banco:</span>
+                               <span className="text-gray-400">Titular:</span>
                                <span className="text-white">{selectedTransactionData.withdrawalBank}</span>
                             </div>
                          )}
@@ -1060,6 +1222,116 @@ export default function PlayerDashboard() {
               </form>
             </div>
           </div>
+        )}
+
+        {/* Tutorial Overlay */}
+        {showTutorial && (
+            <div className="fixed inset-0 bg-black/90 z-[60] flex flex-col items-center justify-center p-6 backdrop-blur-md">
+                <div className="max-w-md w-full text-center space-y-6">
+                    <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                        {tutorialStep === 0 && <CheckCircle className="w-10 h-10 text-primary" />}
+                        {tutorialStep === 1 && <ArrowDownCircle className="w-10 h-10 text-primary" />}
+                        {tutorialStep === 2 && <ArrowUpCircle className="w-10 h-10 text-primary" />}
+                        {tutorialStep === 3 && <Download className="w-10 h-10 text-primary" />}
+                    </div>
+                    
+                    <h2 className="text-3xl font-black text-white">
+                        {tutorialStep === 0 && "¡Bienvenido a la Plataforma!"}
+                        {tutorialStep === 1 && "Cómo Depositar"}
+                        {tutorialStep === 2 && "Cómo Retirar"}
+                        {tutorialStep === 3 && "Instala la App"}
+                    </h2>
+                    
+                    <p className="text-gray-300 text-lg leading-relaxed">
+                        {tutorialStep === 0 && "Tu cuenta ha sido creada exitosamente. Te guiaremos brevemente por las funciones principales."}
+                        {tutorialStep === 1 && "Para cargar fichas, presiona el botón 'Depositar', ingresa el monto y sigue las instrucciones de pago."}
+                        {tutorialStep === 2 && "Para retirar tus ganancias, presiona 'Retirar', completa tus datos bancarios y recibirás tu dinero rápidamente."}
+                        {tutorialStep === 3 && "Para un acceso más rápido, puedes instalar nuestra aplicación directamente en tu celular."}
+                    </p>
+                    
+                    <div className="flex gap-4 pt-4 justify-center">
+                         {tutorialStep > 0 && (
+                             <button 
+                                onClick={() => setTutorialStep(prev => prev - 1)}
+                                className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold"
+                             >
+                                <ChevronLeft className="w-6 h-6" />
+                             </button>
+                         )}
+                         <button 
+                            onClick={() => {
+                                if (tutorialStep < 3) {
+                                    setTutorialStep(prev => prev + 1);
+                                } else {
+                                    setShowTutorial(false);
+                                    // Optionally open install modal after tutorial
+                                    setShowInstallModal(true);
+                                }
+                            }}
+                            className="px-8 py-3 rounded-xl bg-primary hover:bg-primary/90 text-black font-bold flex items-center gap-2"
+                         >
+                            {tutorialStep < 3 ? 'Siguiente' : 'Finalizar'}
+                            {tutorialStep < 3 && <ChevronRight className="w-5 h-5" />}
+                         </button>
+                    </div>
+                    
+                    <div className="flex gap-2 justify-center mt-8">
+                        {[0, 1, 2, 3].map(i => (
+                            <div key={i} className={`w-3 h-3 rounded-full transition-colors ${i === tutorialStep ? 'bg-primary' : 'bg-white/20'}`} />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Install App Modal */}
+        {showInstallModal && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="glass rounded-2xl p-6 w-full max-w-lg border border-white/10 relative max-h-[90vh] overflow-y-auto">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                            <Smartphone className="w-6 h-6 text-primary" />
+                            Instalar Aplicación
+                        </h3>
+                        <button onClick={() => setShowInstallModal(false)} className="text-gray-400 hover:text-white">
+                            <XCircle className="w-6 h-6" />
+                        </button>
+                    </div>
+                    
+                    <div className="space-y-6">
+                        <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                            <h4 className="font-bold text-white mb-2 flex items-center gap-2">
+                                <Globe className="w-4 h-4 text-blue-400" /> Google Chrome (Android)
+                            </h4>
+                            <ol className="list-decimal list-inside text-gray-300 space-y-2 text-sm">
+                                <li>Presiona el ícono de tres puntos <span className="inline-block px-1.5 py-0.5 bg-white/10 rounded">⋮</span> arriba a la derecha.</li>
+                                <li>Selecciona la opción <strong>"Instalar aplicación"</strong> o <strong>"Agregar a la pantalla principal"</strong>.</li>
+                                <li>Confirma la instalación.</li>
+                            </ol>
+                        </div>
+                        
+                        <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                            <h4 className="font-bold text-white mb-2 flex items-center gap-2">
+                                <Globe className="w-4 h-4 text-gray-400" /> Safari (iOS)
+                            </h4>
+                            <ol className="list-decimal list-inside text-gray-300 space-y-2 text-sm">
+                                <li>Presiona el botón Compartir <span className="inline-block px-1.5 py-0.5 bg-white/10 rounded">⎋</span> en la barra inferior.</li>
+                                <li>Desliza hacia arriba y selecciona <strong>"Agregar al inicio"</strong>.</li>
+                                <li>Presiona <strong>"Agregar"</strong> arriba a la derecha.</li>
+                            </ol>
+                        </div>
+                        
+                        <div className="text-center pt-4">
+                            <button 
+                                onClick={() => setShowInstallModal(false)}
+                                className="px-8 py-3 rounded-xl bg-primary hover:bg-primary/90 text-black font-bold"
+                            >
+                                ¡Entendido!
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         )}
 
         <SupportChat />

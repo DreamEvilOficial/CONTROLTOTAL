@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ShieldCheck, Coins, LayoutDashboard } from 'lucide-react';
+import { ShieldCheck, Coins, LayoutDashboard, Zap } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -46,6 +46,42 @@ export default function Home() {
               Crear Cuenta <LayoutDashboard className="w-5 h-5" />
             </span>
           </Link>
+        </div>
+
+        {/* Provider Logos */}
+        <div className="mb-24 text-center mt-24">
+           <h3 className="text-gray-500 text-xs uppercase tracking-[0.2em] mb-8 font-medium">Proveedores Oficiales</h3>
+           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+              <span className="text-white font-black text-2xl hover:text-primary transition-colors tracking-tight cursor-default">PRAGMATIC PLAY</span>
+              <span className="text-white font-black text-2xl hover:text-red-500 transition-colors tracking-tight cursor-default">RubyPlay</span>
+              <span className="text-white font-black text-2xl hover:text-blue-400 transition-colors tracking-tight cursor-default">EVOLUTION</span>
+              <span className="text-white font-black text-2xl hover:text-blue-600 transition-colors tracking-tight cursor-default">playtech</span>
+           </div>
+        </div>
+
+        {/* Security Modules */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24 max-w-6xl mx-auto">
+           <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+                <ShieldCheck className="w-7 h-7 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Seguridad Total</h3>
+              <p className="text-gray-400 leading-relaxed">Garantía de anonimato absoluto y protección de datos con encriptación de grado militar.</p>
+           </div>
+           <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+                <Zap className="w-7 h-7 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Pagos Flash</h3>
+              <p className="text-gray-400 leading-relaxed">Procesamiento instantáneo. Tus fichas se acreditan en segundos, sin esperas.</p>
+           </div>
+           <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+                <Coins className="w-7 h-7 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Venta Optimizada</h3>
+              <p className="text-gray-400 leading-relaxed">Sistema inteligente de gestión de fichas para una experiencia de juego fluida.</p>
+           </div>
         </div>
 
         {/* Features Grid */}

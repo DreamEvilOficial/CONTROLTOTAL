@@ -82,7 +82,7 @@ export async function GET(req: Request) {
   }
 
   // Regular user: Fetch chat with admin
-  const messages = await prisma.message.findMany({
+  let messages = await prisma.message.findMany({
     where: {
       OR: [
         { senderId: user.id },
@@ -93,6 +93,25 @@ export async function GET(req: Request) {
     orderBy: { createdAt: 'asc' },
     include: { sender: { select: { username: true, role: true } } }
   });
+
+  // Auto-greeting if no messages exist
+  if (messages.length === 0) {
+    const admin = await prisma.user.findFirst({
+      where: { role: 'ADMIN' },
+    });
+
+    if (admin) {
+      const greeting = await prisma.message.create({
+        data: {
+          content: 'Hola, en que te puedo ayudar?',
+          senderId: admin.id,
+          receiverId: user.id,
+        },
+        include: { sender: { select: { username: true, role: true } } }
+      });
+      messages = [greeting];
+    }
+  }
 
   return NextResponse.json(messages);
 }

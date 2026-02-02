@@ -28,9 +28,19 @@ import {
   RefreshCw,
   Edit,
   Key,
-  Megaphone
+  Megaphone,
+  Gift
 } from 'lucide-react';
 import MarketingTab from '@/components/MarketingTab';
+
+interface Bonus {
+  id: string;
+  title: string;
+  description: string;
+  type: 'PERCENTAGE' | 'FIXED';
+  amount: number;
+  active: boolean;
+}
 
 interface Transaction {
   id: string;
@@ -51,6 +61,7 @@ interface Transaction {
   withdrawalCvu?: string;
   withdrawalAlias?: string;
   withdrawalBank?: string;
+  withdrawalHolder?: string;
 }
 
 interface Message {
@@ -126,6 +137,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [config, setConfig] = useState<Config>({ whatsappNumber: '', mpAccessToken: '', mpPublicKey: '' });
   const [platforms, setPlatforms] = useState<Platform[]>([]);
+  const [bonuses, setBonuses] = useState<Bonus[]>([]);
   const [newUsersCount, setNewUsersCount] = useState(0);
   const [newTxCount, setNewTxCount] = useState(0);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -135,6 +147,7 @@ export default function AdminDashboard() {
   // Forms
   const [newCvu, setNewCvu] = useState({ bankName: '', alias: '', cbu: '', holderName: '' });
   const [newPlatform, setNewPlatform] = useState({ name: '', url: '', bonus: '' });
+  const [newBonus, setNewBonus] = useState({ title: '', description: '', type: 'PERCENTAGE', amount: 0 });
   const [newUser, setNewUser] = useState({ username: '', password: '', name: '', whatsapp: '' });
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
@@ -157,6 +170,7 @@ export default function AdminDashboard() {
     fetchCvus();
     fetchConfig();
     fetchPlatforms();
+    fetchBonuses();
     fetchUsers();
     fetchConversations();
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -309,6 +323,47 @@ export default function AdminDashboard() {
       if (res.ok) setPlatforms(await res.json());
     } catch (error) {
       console.error('Error fetching platforms:', error);
+    }
+  };
+
+  const fetchBonuses = async () => {
+    try {
+      const res = await fetch('/api/admin/bonuses');
+      if (res.ok) setBonuses(await res.json());
+    } catch (error) {
+      console.error('Error fetching bonuses:', error);
+    }
+  };
+
+  const createBonus = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/bonuses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newBonus),
+      });
+      if (res.ok) {
+        setNewBonus({ title: '', description: '', type: 'PERCENTAGE', amount: 0 });
+        fetchBonuses();
+      }
+    } catch (error) {
+      console.error('Error creating bonus:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteBonus = async (id: string) => {
+    if (!confirm('¿Estás seguro de eliminar este bono?')) return;
+    try {
+      const res = await fetch(`/api/admin/bonuses?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) fetchBonuses();
+    } catch (error) {
+      console.error('Error deleting bonus:', error);
     }
   };
 
@@ -595,7 +650,7 @@ export default function AdminDashboard() {
               }`}
           >
             <BarChart3 className="w-4 h-4" />
-            Resumen
+            Peticiones
             {newTxCount > 0 && (
               <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse ml-1">
                 {newTxCount}
@@ -656,6 +711,16 @@ export default function AdminDashboard() {
           >
             <Gamepad2 className="w-4 h-4" />
             Plataformas
+          </button>
+          <button
+            onClick={() => setActiveTab('bonuses')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'bonuses'
+                ? 'bg-primary text-black shadow-lg shadow-primary/20'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+          >
+            <Gift className="w-4 h-4" />
+            Bonos
           </button>
           <button
             onClick={() => setActiveTab('support')}
@@ -809,7 +874,9 @@ export default function AdminDashboard() {
                                 <div className="mt-2 text-xs bg-black/20 p-2 rounded text-gray-400 border border-white/5">
                                   {tx.withdrawalCvu && <p>CVU: <span className="text-white select-all">{tx.withdrawalCvu}</span></p>}
                                   {tx.withdrawalAlias && <p>Alias: <span className="text-white select-all">{tx.withdrawalAlias}</span></p>}
-                                  {tx.withdrawalBank && <p>Banco: <span className="text-white select-all">{tx.withdrawalBank}</span></p>}
+                                  {tx.withdrawalHolder && <p>Titular: <span className="text-white select-all">{tx.withdrawalHolder}</span></p>}
+                                  {/* Legacy support for Bank field */}
+                                  {!tx.withdrawalHolder && tx.withdrawalBank && <p>Banco/Titular: <span className="text-white select-all">{tx.withdrawalBank}</span></p>}
                                 </div>
                               )}
                             </div>
@@ -1018,8 +1085,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
-
-        {activeTab === 'marketing' && <MarketingTab />}
 
         {/* Edit User Modal */}
         {editingUser && (
@@ -1344,6 +1409,110 @@ export default function AdminDashboard() {
               ))}
               {platforms.length === 0 && (
                 <p className="text-gray-500 text-center py-8">No hay plataformas registradas</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'bonuses' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Create Bonus Form */}
+            <div className="bg-white/5 rounded-2xl p-6 border border-white/10 h-fit">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Plus className="w-5 h-5 text-primary" />
+                Agregar Nuevo Bono
+              </h3>
+              <form onSubmit={createBonus} className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Título del Bono</label>
+                  <input
+                    type="text"
+                    required
+                    value={newBonus.title}
+                    onChange={(e) => setNewBonus({ ...newBonus, title: e.target.value })}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    placeholder="Ej: Bono Bienvenida"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Descripción (Opcional)</label>
+                  <input
+                    type="text"
+                    value={newBonus.description || ''}
+                    onChange={(e) => setNewBonus({ ...newBonus, description: e.target.value })}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    placeholder="Detalles del bono..."
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-gray-400 mb-1 block">Tipo</label>
+                    <select
+                      value={newBonus.type}
+                      onChange={(e) => setNewBonus({ ...newBonus, type: e.target.value as 'PERCENTAGE' | 'FIXED' })}
+                      className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    >
+                      <option value="PERCENTAGE">Porcentaje (%)</option>
+                      <option value="FIXED">Monto Fijo ($)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-400 mb-1 block">Valor</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={newBonus.amount}
+                      onChange={(e) => setNewBonus({ ...newBonus, amount: parseFloat(e.target.value) })}
+                      className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary text-black font-bold py-3 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Creando...' : 'Crear Bono'}
+                </button>
+              </form>
+            </div>
+
+            {/* Bonus List */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Gift className="w-5 h-5 text-primary" />
+                Bonos Activos
+              </h3>
+              {bonuses.map((bonus) => (
+                <div key={bonus.id} className="bg-white/5 rounded-xl p-5 border border-white/10 flex justify-between items-center group">
+                  <div>
+                    <h4 className="font-bold text-lg text-white">{bonus.title}</h4>
+                    {bonus.description && (
+                      <p className="text-gray-400 text-sm mt-1">{bonus.description}</p>
+                    )}
+                    <div className="flex gap-2 mt-2">
+                      <span className="px-2 py-1 rounded text-xs font-bold bg-primary/10 text-primary">
+                        {bonus.type === 'PERCENTAGE' ? `${bonus.amount}% Extra` : `$${bonus.amount} Saldo`}
+                      </span>
+                      {bonus.active && (
+                        <span className="px-2 py-1 rounded text-xs font-bold bg-green-500/10 text-green-500">
+                          ACTIVO
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => deleteBonus(bonus.id)}
+                    className="p-2 rounded-lg bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/20"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+              {bonuses.length === 0 && (
+                <p className="text-gray-500 text-center py-8">No hay bonos creados</p>
               )}
             </div>
           </div>

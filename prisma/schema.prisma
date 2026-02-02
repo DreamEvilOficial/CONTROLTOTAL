@@ -48,6 +48,8 @@ model User {
   platformId String?
   platform   Platform? @relation(fields: [platformId], references: [id])
 
+  userBonuses UserBonus[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -94,6 +96,11 @@ model Transaction {
   withdrawalCvu   String?
   withdrawalAlias String?
   withdrawalBank  String?
+  withdrawalHolder String?
+
+  // Bonus Info
+  userBonusId String?
+  userBonus   UserBonus? @relation(fields: [userBonusId], references: [id])
 
   userId    String
   user      User     @relation("UserTransactions", fields: [userId], references: [id])
@@ -110,6 +117,37 @@ model Transaction {
   @@index([agentId])
   @@index([status])
   @@index([createdAt])
+}
+
+model Bonus {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  type        String   @default("PERCENTAGE") // PERCENTAGE, FIXED
+  amount      Float    
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  userBonuses UserBonus[]
+}
+
+model UserBonus {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  bonusId   String
+  bonus     Bonus    @relation(fields: [bonusId], references: [id])
+  
+  status    String   @default("CLAIMED") // CLAIMED (Active), USED, EXPIRED
+  
+  claimedAt DateTime @default(now())
+  usedAt    DateTime?
+  
+  transactions Transaction[]
+  
+  @@index([userId])
+  @@index([status])
 }
 
 model Message {
