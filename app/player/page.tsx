@@ -2,7 +2,8 @@
 
 import { useEffect, useState, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Wallet, ArrowUpCircle, ArrowDownCircle, History, MessageCircle, CheckCircle, Clock, XCircle, RefreshCw, Key, Lock, ExternalLink, Copy, Check } from 'lucide-react';
+import Link from 'next/link';
+import { LogOut, Wallet, ArrowUpCircle, ArrowDownCircle, History, MessageCircle, CheckCircle, Clock, XCircle, RefreshCw, Key, Lock, ExternalLink, Copy, Check, ShieldCheck, Zap, Coins } from 'lucide-react';
 import ChatWindow from '@/components/ChatWindow';
 import SupportChat from '@/components/SupportChat';
 
@@ -381,7 +382,7 @@ export default function PlayerDashboard() {
       <div className="max-w-5xl mx-auto relative z-10">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight flex items-center gap-3">
-            <span className="text-primary">CONTROL</span>TOTAL
+            <span className="text-primary">CARGAR</span>FICHAS YA!
           </h1>
           <div className="flex gap-2">
             <button 
@@ -409,16 +410,25 @@ export default function PlayerDashboard() {
           </div>
           
           <div className="flex flex-col md:flex-row justify-between items-center gap-8 relative z-10 mb-8">
-            <div className="w-full md:w-auto text-center md:text-left">
-              <h2 className="text-gray-400 text-sm uppercase tracking-wider mb-2 font-medium">Mi Usuario</h2>
-              <div className="text-5xl font-black text-white tracking-tighter text-glow">
-                {stats.username}
+            <div className="w-full md:w-auto text-center md:text-left space-y-2">
+              <div className="flex items-center gap-3 justify-center md:justify-start">
+                <span className="text-gray-400 text-sm uppercase tracking-wider font-medium">Mi Usuario:</span>
+                <span className="text-3xl font-black text-white tracking-tighter text-glow">
+                  {stats.username}
+                </span>
               </div>
+              {stats.platformName && (
+                <div className="flex items-center gap-3 justify-center md:justify-start">
+                  <span className="text-gray-400 text-sm uppercase tracking-wider font-medium">Mi Plataforma:</span>
+                  <span className="text-3xl font-black text-primary tracking-tighter text-glow">
+                    {stats.platformName}
+                  </span>
+                </div>
+              )}
             </div>
 
             {stats.platformName && (
               <div className="flex flex-col items-center justify-center gap-2 order-last md:order-none w-full md:w-auto">
-                <div className="text-2xl font-bold text-white tracking-tight">{stats.platformName}</div>
                 {stats.platformUrl && (
                   <div className="flex items-center gap-2">
                     <a
@@ -506,11 +516,16 @@ export default function PlayerDashboard() {
           )}
         </div>
 
-        {/* Transactions History */}
-        <div className="glass rounded-2xl p-6 md:p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <History className="w-6 h-6 text-primary" />
-            <h2 className="text-xl font-bold text-white">Historial de Transacciones</h2>
+        {/* Active Petitions */}
+        <div className="glass rounded-2xl p-6 md:p-8 mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Clock className="w-6 h-6 text-primary" />
+              <h2 className="text-xl font-bold text-white">Peticiones Pendientes</h2>
+            </div>
+            <Link href="/player/historial" className="text-sm text-primary hover:text-primary/80 transition-colors flex items-center gap-1 font-bold">
+              Ver Historial Completo <ExternalLink className="w-3 h-3" />
+            </Link>
           </div>
           
           <div className="overflow-x-auto">
@@ -525,7 +540,7 @@ export default function PlayerDashboard() {
                 </tr>
               </thead>
               <tbody className="text-sm">
-                {transactions.map((tx) => (
+                {transactions.filter(tx => tx.status === 'PENDING').map((tx) => (
                   <tr key={tx.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="py-4 pl-4 text-gray-300">
                       {new Date(tx.createdAt).toLocaleDateString()}
@@ -593,16 +608,91 @@ export default function PlayerDashboard() {
                     </td>
                   </tr>
                 ))}
-                {transactions.length === 0 && (
+                {transactions.filter(tx => tx.status === 'PENDING').length === 0 && (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-gray-500">
-                      No hay transacciones recientes
+                      No tienes peticiones pendientes
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Provider Logos */}
+        <div className="mb-12 text-center">
+           <h3 className="text-gray-500 text-xs uppercase tracking-[0.2em] mb-8 font-medium">Proveedores Oficiales</h3>
+           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+              <a href="https://www.pragmaticplay.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-primary transition-colors tracking-tight">PRAGMATIC PLAY</a>
+              <a href="https://rubyplay.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-red-500 transition-colors tracking-tight">RubyPlay</a>
+              <a href="https://www.evolution.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-blue-400 transition-colors tracking-tight">EVOLUTION</a>
+              <a href="https://www.playtech.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-blue-600 transition-colors tracking-tight">playtech</a>
+           </div>
+        </div>
+
+        {/* Security Modules */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+           <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+                <ShieldCheck className="w-7 h-7 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Seguridad Total</h3>
+              <p className="text-gray-400 leading-relaxed">Garantía de anonimato absoluto y protección de datos con encriptación de grado militar.</p>
+           </div>
+           <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+                <Zap className="w-7 h-7 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Pagos Flash</h3>
+              <p className="text-gray-400 leading-relaxed">Procesamiento instantáneo. Tus fichas se acreditan en segundos, sin esperas.</p>
+           </div>
+           <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+                <Coins className="w-7 h-7 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Venta Optimizada</h3>
+              <p className="text-gray-400 leading-relaxed">Sistema inteligente de gestión de fichas para una experiencia de juego fluida.</p>
+           </div>
+        </div>
+
+        {/* WhatsApp Quick Contact */}
+        <div className="glass rounded-2xl p-8 md:p-12 text-center relative overflow-hidden mb-8">
+           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+           <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+           <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#25D366]/5 rounded-full blur-3xl"></div>
+           
+           <div className="relative z-10 max-w-lg mx-auto">
+             <h2 className="text-3xl font-black text-white mb-2">Atención Personalizada</h2>
+             <p className="text-gray-400 mb-8">Ingresa tu nombre y contáctanos directamente por WhatsApp para una carga rápida.</p>
+             
+             <div className="flex flex-col sm:flex-row gap-4">
+                <input 
+                  type="text" 
+                  placeholder="Tu Nombre" 
+                  id="wa-name"
+                  className="flex-1 bg-black/40 border border-white/10 rounded-xl p-4 text-white focus:border-primary focus:outline-none placeholder-gray-500 transition-colors"
+                />
+                <button 
+                  onClick={() => {
+                     const nameInput = document.getElementById('wa-name') as HTMLInputElement;
+                     const name = nameInput.value;
+                     if(!name) {
+                       nameInput.focus();
+                       nameInput.classList.add('border-red-500');
+                       setTimeout(() => nameInput.classList.remove('border-red-500'), 2000);
+                       return;
+                     }
+                     const msg = `Hola, soy ${name}. Quiero cargar fichas en mi cuenta!`;
+                     window.open(`https://wa.me/${adminWhatsapp || ''}?text=${encodeURIComponent(msg)}`, '_blank');
+                  }}
+                  className="px-8 py-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-bold text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] shadow-lg shadow-[#25D366]/20"
+                >
+                   <MessageCircle className="w-5 h-5" />
+                   <span>Contactar Ahora</span>
+                </button>
+             </div>
+           </div>
         </div>
 
         {/* Modals */}
@@ -680,9 +770,9 @@ export default function PlayerDashboard() {
                  <button onClick={() => setSelectedTx(null)} className="text-gray-400 hover:text-white transition-colors">✕</button>
               </div>
               
-              <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-2">
+              <div className="flex-1 overflow-hidden flex flex-col lg:grid lg:grid-cols-2">
                 {/* Left Column: Details */}
-                <div className="p-6 overflow-y-auto border-r border-white/10 bg-black/20 space-y-6">
+                <div className="p-6 overflow-y-auto border-r border-white/10 bg-black/20 space-y-6 max-h-[35vh] lg:max-h-full shrink-0">
                   {selectedTransactionData?.type === 'DEPOSIT' && selectedTransactionData.status === 'PENDING' && (
                     <>
                       {/* Payment Method Selector */}
@@ -848,10 +938,47 @@ export default function PlayerDashboard() {
                       </div>
                     </div>
                   )}
+
+                  {selectedTransactionData?.status !== 'PENDING' && (
+                    <div className={`p-6 rounded-xl border ${
+                      selectedTransactionData?.status === 'COMPLETED' 
+                        ? 'bg-green-500/10 border-green-500/20' 
+                        : 'bg-red-500/10 border-red-500/20'
+                    }`}>
+                      <p className={`font-bold mb-2 flex items-center gap-2 text-lg ${
+                        selectedTransactionData?.status === 'COMPLETED' ? 'text-green-500' : 'text-red-500'
+                      }`}>
+                        {selectedTransactionData?.status === 'COMPLETED' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                        {selectedTransactionData?.status === 'COMPLETED' ? 'Operación Completada' : 'Operación Rechazada'}
+                      </p>
+                      <p className="text-gray-300 mb-4">
+                        {selectedTransactionData?.status === 'COMPLETED' 
+                          ? 'Esta operación ya fue procesada y finalizada.' 
+                          : 'Esta operación fue rechazada por el administrador.'}
+                      </p>
+
+                      <div className="bg-black/20 p-4 rounded-xl space-y-3 border border-white/5">
+                         <div className="flex justify-between">
+                            <span className="text-gray-400">Tipo:</span>
+                            <span className="text-white font-bold">
+                              {selectedTransactionData?.type === 'DEPOSIT' ? 'Depósito' : 'Retiro'}
+                            </span>
+                         </div>
+                         <div className="flex justify-between">
+                            <span className="text-gray-400">Monto:</span>
+                            <span className="text-white font-bold text-lg">${selectedTransactionData?.amount.toLocaleString()}</span>
+                         </div>
+                         <div className="flex justify-between">
+                            <span className="text-gray-400">Fecha:</span>
+                            <span className="text-white">{selectedTransactionData?.createdAt ? new Date(selectedTransactionData.createdAt).toLocaleString() : ''}</span>
+                         </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Column: Chat */}
-                <div className="flex flex-col h-full bg-black/40 border-l border-white/10">
+                <div className="flex flex-col flex-1 lg:h-full bg-black/40 border-l border-white/10 min-h-0">
                   <div className="flex-1 overflow-hidden">
                     <ChatWindow
                       transactionId={selectedTx}

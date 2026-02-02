@@ -132,6 +132,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(transaction);
   } catch (error) {
-    return NextResponse.json({ error: 'Error creando transacción' }, { status: 400 });
+    console.error('[TRANSACTION ERROR]', error);
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : 'Error creando transacción' 
+    }, { status: 400 });
   }
 }
