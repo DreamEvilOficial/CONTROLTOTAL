@@ -1,16 +1,16 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { 
-  MessageCircle, 
-  X, 
-  Send, 
-  HelpCircle, 
-  Clock, 
-  Gift, 
-  ChevronRight, 
-  ArrowLeft, 
-  MessageSquare, 
+import {
+  MessageCircle,
+  X,
+  Send,
+  HelpCircle,
+  Clock,
+  Gift,
+  ChevronRight,
+  ArrowLeft,
+  MessageSquare,
   ExternalLink,
   Phone
 } from 'lucide-react';
@@ -40,13 +40,13 @@ export default function SupportChat() {
     fetch('/api/config/public')
       .then(r => r.json())
       .then(d => setAdminWhatsapp(d.whatsappNumber || null))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
     if (isOpen && view === 'CHAT') {
       fetchMessages();
-      const interval = setInterval(fetchMessages, 3000);
+      const interval = setInterval(fetchMessages, 2000);
       return () => clearInterval(interval);
     }
   }, [isOpen, view]);
@@ -63,7 +63,7 @@ export default function SupportChat() {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
-            setMessages(data);
+          setMessages(data);
         }
       }
     } catch (error) {
@@ -120,7 +120,7 @@ export default function SupportChat() {
     <div className="p-4 bg-black/40 border-b border-white/5 flex justify-between items-center backdrop-blur-md sticky top-0 z-10">
       <div className="flex items-center gap-3">
         {showBack && (
-          <button 
+          <button
             onClick={() => setView('MENU')}
             className="p-1 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
             aria-label="Volver al menú"
@@ -130,7 +130,7 @@ export default function SupportChat() {
         )}
         <h3 className="font-bold text-white text-lg">{title}</h3>
       </div>
-      <button 
+      <button
         onClick={() => {
           setIsOpen(false);
           setView('MENU'); // Reset view on close
@@ -149,7 +149,7 @@ export default function SupportChat() {
         <h2 className="text-2xl font-black text-white mb-2">Centro de Ayuda</h2>
         <p className="text-gray-400 text-sm">¿En qué podemos ayudarte hoy?</p>
       </div>
-      
+
       <div className="p-4 space-y-3 flex-1 overflow-y-auto">
         <button
           onClick={() => setView('HOW_TO_DEPOSIT')}
@@ -249,7 +249,7 @@ export default function SupportChat() {
   const renderChat = () => (
     <div className="flex flex-col h-full animate-in slide-in-from-right duration-300">
       {renderHeader('Chat de Soporte')}
-      
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-black/20">
         {messages.length === 0 && (
@@ -260,24 +260,23 @@ export default function SupportChat() {
         )}
         {messages.map((msg) => {
           const isAdmin = msg.sender.role === 'ADMIN';
-          
+
           return (
             <div
               key={msg.id}
               className={`flex ${isAdmin ? 'justify-start' : 'justify-end'}`}
             >
               <div
-                className={`max-w-[85%] rounded-2xl p-3 text-sm shadow-sm ${
-                  isAdmin
+                className={`max-w-[85%] rounded-2xl p-3 text-sm shadow-sm ${isAdmin
                     ? 'bg-[#2a2a2a] text-white rounded-tl-none border border-white/10'
                     : 'bg-primary text-black rounded-tr-none font-medium'
-                }`}
+                  }`}
               >
                 {isAdmin && (
-                   <div className="text-xs mb-1 font-bold text-primary flex items-center gap-1">
-                     <span className="w-1 h-1 rounded-full bg-primary"></span>
-                     SOPORTE
-                   </div>
+                  <div className="text-xs mb-1 font-bold text-primary flex items-center gap-1">
+                    <span className="w-1 h-1 rounded-full bg-primary"></span>
+                    SOPORTE
+                  </div>
                 )}
                 <p className="leading-relaxed">{msg.content}</p>
                 <span className={`text-[10px] block mt-1 text-right ${isAdmin ? 'text-gray-400' : 'text-black/50'}`}>
@@ -315,7 +314,7 @@ export default function SupportChat() {
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-in fade-in duration-300"
         onClick={() => setIsOpen(false)}
       />
@@ -325,7 +324,7 @@ export default function SupportChat() {
         {view === 'MENU' && (
           <div className="flex flex-col h-full animate-in slide-in-from-right duration-300">
             <div className="p-4 bg-black/40 border-b border-white/5 flex justify-end backdrop-blur-md">
-              <button 
+              <button
                 onClick={() => setIsOpen(false)}
                 className="p-1 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
               >

@@ -37,9 +37,9 @@ export default function ChatWindow({ transactionId, currentUserRole, onClose }: 
     if (currentUserRole === 'PLAYER' || currentUserRole === 'AGENT') {
       fetchCvus();
     }
-    
-    // Poll for new messages every 3 seconds
-    const interval = setInterval(fetchMessages, 3000);
+
+    // Poll for new messages every 2 seconds
+    const interval = setInterval(fetchMessages, 2000);
     return () => clearInterval(interval);
   }, [transactionId]);
 
@@ -94,7 +94,7 @@ export default function ChatWindow({ transactionId, currentUserRole, onClose }: 
       {/* Header */}
       <div className="p-4 border-b border-white/10 bg-white/5 flex justify-between items-center shrink-0">
         <h3 className="font-bold flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"/>
+          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           Soporte
         </h3>
         {onClose && (
@@ -108,19 +108,18 @@ export default function ChatWindow({ transactionId, currentUserRole, onClose }: 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-black/20">
         {messages.map((msg) => {
           const isMe = (currentUserRole === 'PLAYER' && msg.sender.role === 'PLAYER') ||
-                       (currentUserRole !== 'PLAYER' && msg.sender.role !== 'PLAYER');
-          
+            (currentUserRole !== 'PLAYER' && msg.sender.role !== 'PLAYER');
+
           return (
             <div
               key={msg.id}
               className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[85%] rounded-2xl p-3 text-sm ${
-                  isMe
+                className={`max-w-[85%] rounded-2xl p-3 text-sm ${isMe
                     ? 'bg-primary text-black rounded-tr-none'
                     : 'bg-white/10 text-white rounded-tl-none'
-                }`}
+                  }`}
               >
                 <div className="text-[10px] font-bold opacity-70 mb-1 flex items-center gap-1">
                   {msg.sender.role === 'ADMIN' ? (

@@ -170,7 +170,7 @@ export default function AdminDashboard() {
       else Notification.requestPermission().then(p => setNotificationsEnabled(p === 'granted'));
     }
 
-    // Poll for updates every 3 seconds
+    // Poll for updates every 2 seconds for real-time
     const interval = setInterval(() => {
       fetchTransactions();
       fetchStats();
@@ -180,7 +180,7 @@ export default function AdminDashboard() {
       if (selectedChatUser) {
         fetchAdminMessages(selectedChatUser.id);
       }
-    }, 3000);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, [selectedChatUser]);

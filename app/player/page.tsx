@@ -71,11 +71,11 @@ export default function PlayerDashboard() {
     fetchActiveCvus();
     fetch('/api/config/public').then(r => r.json()).then(d => setAdminWhatsapp(d.whatsappNumber || null)).catch(() => { });
 
-    // Auto-refresh every 10s for updates
+    // Auto-refresh every 2s for real-time updates
     const interval = setInterval(() => {
       fetchTransactions();
       fetchStats();
-    }, 10000);
+    }, 2000);
     return () => clearInterval(interval);
   }, []);
 
