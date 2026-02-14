@@ -138,6 +138,8 @@ export default function AdminDashboard() {
   const [newPlatform, setNewPlatform] = useState({ name: '', url: '', bonus: '' });
   const [newUser, setNewUser] = useState({ username: '', password: '', name: '', whatsapp: '' });
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingPlatform, setEditingPlatform] = useState<Platform | null>(null);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
 
   // Chat state
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -518,6 +520,28 @@ export default function AdminDashboard() {
       if (res.ok) fetchPlatforms();
     } catch (error) {
       console.error('Error deleting platform:', error);
+    }
+  };
+
+  const updatePlatform = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPlatform) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/platforms?id=${editingPlatform.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingPlatform),
+      });
+
+      if (res.ok) {
+        setEditingPlatform(null);
+        fetchPlatforms();
+      }
+    } catch (error) {
+      console.error('Error updating platform:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -951,63 +975,96 @@ export default function AdminDashboard() {
                 <Users className="w-5 h-5 text-primary" />
                 Jugadores Registrados
               </h3>
-              <div className="grid gap-4">
-                {users.map((user) => (
-                  <div key={user.id} className="bg-white/5 rounded-xl p-5 border border-white/10 hover:border-primary/20 transition-all">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-bold text-lg text-white">{user.username}</h4>
-                          <span className="px-2 py-0.5 rounded text-xs bg-primary/10 text-primary font-bold">
-                            ${user.balance.toLocaleString()}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-400">{user.name}</p>
-                        {user.whatsapp && (
-                          <p className="text-sm text-gray-400 mt-1 flex items-center gap-1">
-                            <MessageCircle className="w-3 h-3" /> {user.whatsapp}
-                          </p>
-                        )}
 
-                        <div className="mt-3 p-3 bg-black/20 rounded-lg border border-white/5 text-sm">
-                          <p className="text-gray-400 mb-1">Plataforma: <span className="text-white font-medium">{user.platform?.name || 'No asignada'}</span></p>
-                          {user.platformUser ? (
-                            <div className="flex gap-4 mt-2 pt-2 border-t border-white/5">
-                              <div>
-                                <span className="text-xs text-gray-500 block">Usuario Casino</span>
-                                <span className="text-white font-mono">{user.platformUser}</span>
-                              </div>
-                              <div>
-                                <span className="text-xs text-gray-500 block">Contraseña Casino</span>
-                                <span className="text-white font-mono">{user.platformPassword}</span>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="mt-2 bg-yellow-500/10 text-yellow-500 text-xs px-2 py-1 rounded inline-flex items-center gap-1 animate-pulse">
-                              <Clock className="w-3 h-3" />
-                              Pendiente de Credenciales
-                            </div>
+              {/* Search Bar */}
+              <div className="mb-6 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-gray-500" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Buscar por usuario o nombre..."
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white focus:border-primary/50 outline-none transition-all"
+                />
+              </div>
+
+              <div className="grid gap-4">
+                {users
+                  .filter(u =>
+                    u.username.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                    (u.name && u.name.toLowerCase().includes(userSearchTerm.toLowerCase()))
+                  )
+                  .map((user) => (
+                    <div key={user.id} className="bg-white/5 rounded-xl p-5 border border-white/10 hover:border-primary/20 transition-all">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-bold text-lg text-white">{user.username}</h4>
+                            <span className="px-2 py-0.5 rounded text-xs bg-primary/10 text-primary font-bold">
+                              ${user.balance.toLocaleString()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-400">{user.name}</p>
+                          {user.whatsapp && (
+                            <p className="text-sm text-gray-400 mt-1 flex items-center gap-1">
+                              <MessageCircle className="w-3 h-3" /> {user.whatsapp}
+                            </p>
                           )}
+
+                          <div className="mt-3 p-3 bg-black/20 rounded-lg border border-white/5 text-sm">
+                            <p className="text-gray-400 mb-1">Plataforma: <span className="text-white font-medium">{user.platform?.name || 'No asignada'}</span></p>
+                            {user.platformUser ? (
+                              <div className="flex gap-4 mt-2 pt-2 border-t border-white/5">
+                                <div>
+                                  <span className="text-xs text-gray-500 block">Usuario Casino</span>
+                                  <span className="text-white font-mono">{user.platformUser}</span>
+                                </div>
+                                <div>
+                                  <span className="text-xs text-gray-500 block">Contraseña Casino</span>
+                                  <span className="text-white font-mono">{user.platformPassword}</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-2 bg-yellow-500/10 text-yellow-500 text-xs px-2 py-1 rounded inline-flex items-center gap-1 animate-pulse">
+                                <Clock className="w-3 h-3" />
+                                Pendiente de Credenciales
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          {user.whatsapp && (
+                            <a
+                              href={`https://wa.me/${user.whatsapp.replace(/\D/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-2 bg-green-500/10 hover:bg-green-500/20 rounded-lg text-green-500 transition-colors"
+                              title="Contactar por WhatsApp"
+                            >
+                              <MessageCircle className="w-5 h-5" />
+                            </a>
+                          )}
+                          <button
+                            onClick={() => setEditingUser(user)}
+                            className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-primary transition-colors"
+                            title="Editar Credenciales"
+                          >
+                            <Edit className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => deleteUser(user.id)}
+                            className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg text-red-500 transition-colors"
+                            title="Eliminar Usuario"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
                         </div>
                       </div>
-
-                      <button
-                        onClick={() => setEditingUser(user)}
-                        className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-primary transition-colors"
-                        title="Editar Credenciales"
-                      >
-                        <Edit className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => deleteUser(user.id)}
-                        className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg text-red-500 transition-colors ml-2"
-                        title="Eliminar Usuario"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  ))}
                 {users.length === 0 && (
                   <p className="text-center text-gray-500 py-8">No hay jugadores registrados</p>
                 )}
@@ -1087,6 +1144,70 @@ export default function AdminDashboard() {
                   <button
                     type="button"
                     onClick={() => setEditingUser(null)}
+                    className="flex-1 py-3 rounded-lg bg-white/5 hover:bg-white/10 text-white font-bold transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 py-3 rounded-lg bg-primary text-black font-bold hover:bg-primary/90 transition-colors"
+                  >
+                    {loading ? 'Guardando...' : 'Guardar Cambios'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {editingPlatform && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold">Editar Plataforma: {editingPlatform.name}</h3>
+                <button onClick={() => setEditingPlatform(null)} className="text-gray-400 hover:text-white">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={updatePlatform} className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Nombre de la Plataforma</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingPlatform.name}
+                    onChange={(e) => setEditingPlatform({ ...editingPlatform, name: e.target.value })}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">URL de la Plataforma</label>
+                  <input
+                    type="url"
+                    value={editingPlatform.url || ''}
+                    onChange={(e) => setEditingPlatform({ ...editingPlatform, url: e.target.value })}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Bono de Bienvenida</label>
+                  <textarea
+                    required
+                    value={editingPlatform.bonus}
+                    onChange={(e) => setEditingPlatform({ ...editingPlatform, bonus: e.target.value })}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none min-h-[100px]"
+                  />
+                </div>
+
+                <div className="pt-4 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditingPlatform(null)}
                     className="flex-1 py-3 rounded-lg bg-white/5 hover:bg-white/10 text-white font-bold transition-colors"
                   >
                     Cancelar
@@ -1331,12 +1452,22 @@ export default function AdminDashboard() {
                       ACTIVA
                     </span>
                   </div>
-                  <button
-                    onClick={() => deletePlatform(platform.id)}
-                    className="p-2 rounded-lg bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/20"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                    <button
+                      onClick={() => setEditingPlatform(platform)}
+                      className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20"
+                      title="Editar Plataforma"
+                    >
+                      <Edit className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => deletePlatform(platform.id)}
+                      className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                      title="Eliminar Plataforma"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               ))}
               {platforms.length === 0 && (

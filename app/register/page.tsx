@@ -31,7 +31,7 @@ export default function RegisterPage() {
 
   const fetchPlatforms = async () => {
     try {
-      const res = await fetch('/api/config/public');
+      const res = await fetch('/api/config/public', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setPlatforms(data.platforms || []);
@@ -177,10 +177,10 @@ export default function RegisterPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-300 ml-1">WhatsApp</label>
               <div className="relative group">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-primary transition-colors" />
                 <div className="flex">
-                  <span className="inline-flex items-center px-3 bg-black/30 border border-white/10 border-r-0 rounded-l-xl text-gray-400 select-none">
-                    +54 9
+                  <span className="inline-flex items-center px-3 bg-black/30 border border-white/10 border-r-0 rounded-l-xl text-gray-400 select-none gap-2">
+                    <Phone className="w-4 h-4 text-gray-500 group-focus-within:text-primary transition-colors" />
+                    <span className="text-sm font-bold">+54 9</span>
                   </span>
                   <input
                     type="tel"

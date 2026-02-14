@@ -7,9 +7,9 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://cargarfichasya.vercel.app'),
-  title: "CONTROLTOTAL | Carga de Fichas 24/7",
+  title: "CargarFichas YA | Carga de Fichas 24/7",
   description: "La plataforma definitiva para gestionar tus cargas de fichas. Seguridad, rapidez y control total sobre tus jugadas.",
-  keywords: ["casino", "fichas", "cargas", "poker", "slots", "apuestas", "seguro", "rápido", "controltotal"],
+  keywords: ["casino", "fichas", "cargas", "poker", "slots", "apuestas", "seguro", "rápido", "cargarfichasya"],
   icons: {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },
@@ -20,23 +20,23 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "CONTROLTOTAL - Tu Saldo al Instante",
+    title: "CargarFichas YA - Tu Saldo al Instante",
     description: "Servicio premium de carga de fichas. Operamos con las mejores plataformas del mercado. Seguridad garantizada.",
     type: "website",
     url: 'https://cargarfichasya.vercel.app',
-    siteName: 'CONTROLTOTAL',
+    siteName: 'CargarFichas YA',
     images: [
       {
         url: '/icon.svg',
         width: 1200,
         height: 630,
-        alt: "CONTROLTOTAL Logo",
+        alt: "CargarFichas YA Logo",
       }
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "CONTROLTOTAL - Carga de Fichas",
+    title: "CargarFichas YA - Carga de Fichas",
     description: "Carga fichas en segundos con seguridad total.",
     images: ['/icon.svg'],
   },
