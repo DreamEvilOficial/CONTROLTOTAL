@@ -81,6 +81,7 @@ model Platform {
 
 model Transaction {
   id        String            @id @default(uuid())
+  operationCode String        @unique @default(cuid())
   amount    Float
   expectedAmount Float?       // Monto con decimales para identificación MP
   type      String

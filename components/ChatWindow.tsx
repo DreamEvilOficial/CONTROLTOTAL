@@ -6,7 +6,7 @@ interface Message {
   id: string;
   content: string;
   sender: {
-    name: string;
+    username: string;
     role: string;
   };
   createdAt: string;
@@ -30,10 +30,12 @@ export default function ChatWindow({ transactionId, currentUserRole, onClose }: 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [cvus, setCvus] = useState<Cvu[]>([]);
+  const [operationCode, setOperationCode] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchMessages();
+    fetchTransactionInfo();
     if (currentUserRole === 'PLAYER' || currentUserRole === 'AGENT') {
       fetchCvus();
     }
@@ -46,6 +48,19 @@ export default function ChatWindow({ transactionId, currentUserRole, onClose }: 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const fetchTransactionInfo = async () => {
+    try {
+      const res = await fetch(`/api/transactions/${transactionId}/status`);
+      if (res.ok) {
+        const data = await res.json();
+        setOperationCode(data.operationCode || transactionId.substring(0, 8).toUpperCase());
+      }
+    } catch (error) {
+      console.error('Error fetching transaction info:', error);
+      setOperationCode(transactionId.substring(0, 8).toUpperCase());
+    }
+  };
 
   const fetchMessages = async () => {
     const res = await fetch(`/api/transactions/${transactionId}/chat`);
@@ -93,10 +108,15 @@ export default function ChatWindow({ transactionId, currentUserRole, onClose }: 
     <div className="flex flex-col h-full bg-[#1a1a1a] text-white overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-white/10 bg-white/5 flex justify-between items-center shrink-0">
-        <h3 className="font-bold flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          Soporte
-        </h3>
+        <div>
+          <h3 className="font-bold flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            Soporte
+          </h3>
+          {operationCode && (
+            <p className="text-xs text-gray-400 mt-0.5 font-mono">Op. #{operationCode}</p>
+          )}
+        </div>
         {onClose && (
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-lg">
             ✕
@@ -117,8 +137,8 @@ export default function ChatWindow({ transactionId, currentUserRole, onClose }: 
             >
               <div
                 className={`max-w-[85%] rounded-2xl p-3 text-sm ${isMe
-                    ? 'bg-primary text-black rounded-tr-none'
-                    : 'bg-white/10 text-white rounded-tl-none'
+                  ? 'bg-primary text-black rounded-tr-none'
+                  : 'bg-white/10 text-white rounded-tl-none'
                   }`}
               >
                 <div className="text-[10px] font-bold opacity-70 mb-1 flex items-center gap-1">
@@ -127,7 +147,7 @@ export default function ChatWindow({ transactionId, currentUserRole, onClose }: 
                       <span className="text-red-500">[SOPORTE]</span>
                     </>
                   ) : (
-                    msg.sender.name
+                    msg.sender.username || 'Usuario'
                   )}
                 </div>
                 <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>

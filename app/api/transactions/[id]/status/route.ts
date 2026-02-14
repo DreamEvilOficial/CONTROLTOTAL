@@ -20,7 +20,7 @@ export async function PUT(
 
   try {
     const { status } = await request.json() as { status: 'COMPLETED' | 'REJECTED' };
-    
+
     // Start transaction
     const result = await prisma.$transaction(async (tx) => {
       const transaction = await tx.transaction.findUnique({
@@ -61,6 +61,33 @@ export async function PUT(
     });
 
     return NextResponse.json(result);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+}
+
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id: params.id },
+      select: {
+        id: true,
+        operationCode: true,
+        status: true,
+        type: true,
+        amount: true,
+        createdAt: true,
+      },
+    });
+
+    if (!transaction) {
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(transaction);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }

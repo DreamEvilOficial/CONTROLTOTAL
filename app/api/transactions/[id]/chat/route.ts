@@ -19,7 +19,7 @@ export async function GET(
   const messages = await prisma.message.findMany({
     where: { transactionId: params.id },
     orderBy: { createdAt: 'asc' },
-    include: { sender: { select: { name: true, role: true } } },
+    include: { sender: { select: { username: true, role: true } } },
   });
 
   // Mark these messages as read
@@ -74,7 +74,7 @@ export async function POST(
         receiverId: receiverId,
         transactionId: params.id,
       },
-      include: { sender: { select: { name: true, role: true } } },
+      include: { sender: { select: { username: true, role: true } } },
     });
 
     return NextResponse.json(message);
