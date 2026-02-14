@@ -1,0 +1,147 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Enums replaced with String for SQLite compatibility
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  name      String
+  role      String   @default("PLAYER")
+  balance   Float    @default(0)
+  whatsapp  String?
+  
+  // Platform specific
+  platformUser     String?
+  platformPassword String?
+  onboardingCompleted Boolean @default(false)
+  
+  // Agent specific config
+  mpAccessToken String? // MercadoPago Access Token
+  mpEnabled     Boolean @default(false)
+  
+  // Admin specific config
+  // Meta fields moved to SystemConfig
+
+  // Relations
+  managerId String?  
+  manager   User?    @relation("ManagerToUser", fields: [managerId], references: [id])
+  users     User[]   @relation("ManagerToUser")
+
+  transactions      Transaction[] @relation("UserTransactions") 
+  managedTransactions Transaction[] @relation("AgentTransactions") 
+
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+
+  platformId String?
+  platform   Platform? @relation(fields: [platformId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([managerId])
+}
+
+model SystemConfig {
+  id              String   @id @default("config")
+  whatsappNumber  String?
+  mpAccessToken   String?
+  mpPublicKey     String?
+  metaAccessToken String?
+  metaAdAccountId String?
+  metaPageId      String?
+  metaPixelId     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Platform {
+  id          String   @id @default(uuid())
+  name        String
+  url         String?
+  bonus       String
+  active      Boolean  @default(true)
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Transaction {
+  id        String            @id @default(uuid())
+  amount    Float
+  expectedAmount Float?       // Monto con decimales para identificación MP
+  type      String
+  method    String?           // MANUAL, AUTO, MP
+  status    String            @default("PENDING")
+  
+  // MercadoPago Info
+  mpPaymentId String?
+
+  // Withdrawal Info
+  withdrawalCvu   String?
+  withdrawalAlias String?
+  withdrawalBank  String?
+
+  userId    String
+  user      User     @relation("UserTransactions", fields: [userId], references: [id])
+  
+  agentId   String?
+  agent     User?    @relation("AgentTransactions", fields: [agentId], references: [id])
+  
+  messages  Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([agentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Message {
+  id            String   @id @default(uuid())
+  content       String
+  senderId      String
+  sender        User     @relation("SentMessages", fields: [senderId], references: [id])
+  
+  receiverId    String
+  receiver      User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  transactionId String?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+
+  read          Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([transactionId])
+  @@index([createdAt])
+}
+
+model Cvu {
+  id        String   @id @default(uuid())
+  bankName  String
+  alias     String
+  cbu       String
+  holderName String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active])
+}

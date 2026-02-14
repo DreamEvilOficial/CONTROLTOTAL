@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Base - Dark Casino Theme by Default */
+    --background: 150 50% 4%; /* Very dark green/black */
+    --foreground: 0 0% 95%;
+
+    --card: 150 30% 8%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 150 30% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 142 71% 45%; /* Emerald Green */
+    --primary-foreground: 150 50% 4%;
+
+    --secondary: 48 96% 53%; /* Gold */
+    --secondary-foreground: 150 50% 4%;
+
+    --muted: 150 30% 15%;
+    --muted-foreground: 150 20% 60%;
+
+    --accent: 142 70% 20%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 150 20% 20%;
+    --input: 150 20% 20%;
+    --ring: 142 71% 45%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Same as root for now, or darker variants */
+    --background: 150 50% 4%;
+    --foreground: 0 0% 95%;
+    --card: 150 30% 8%;
+    --card-foreground: 0 0% 95%;
+    --popover: 150 30% 8%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 142 71% 45%;
+    --primary-foreground: 150 50% 4%;
+    --secondary: 48 96% 53%;
+    --secondary-foreground: 150 50% 4%;
+    --muted: 150 30% 15%;
+    --muted-foreground: 150 20% 60%;
+    --accent: 142 70% 20%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 150 20% 20%;
+    --input: 150 20% 20%;
+    --ring: 142 71% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image: radial-gradient(at center top, hsl(142, 70%, 10%) 0%, hsl(150, 50%, 4%) 60%);
+    background-attachment: fixed;
+  }
+}
+
+/* Custom Utilities for Glow Effects */
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 10px hsla(142, 71%, 45%, 0.5);
+  }
+  .box-glow {
+    box-shadow: 0 0 20px hsla(142, 71%, 45%, 0.1);
+  }
+  .glass {
+    @apply bg-opacity-30 backdrop-blur-md bg-white/5 border border-white/10;
+  }
+}
