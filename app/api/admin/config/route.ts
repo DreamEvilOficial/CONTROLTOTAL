@@ -12,6 +12,8 @@ const configSchema = z.object({
   metaAdAccountId: z.string().optional().nullable(),
   metaPageId: z.string().optional().nullable(),
   metaPixelId: z.string().optional().nullable(),
+  telegramBotToken: z.string().optional().nullable(),
+  telegramChatId: z.string().optional().nullable(),
 });
 
 async function checkAdmin() {
