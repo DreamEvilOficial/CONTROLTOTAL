@@ -31,7 +31,7 @@ import {
   Megaphone
 } from 'lucide-react';
 import MarketingTab from '@/components/MarketingTab';
-import { playNotificationSound, sendNotification } from '@/lib/notifications';
+import { sendNotification } from '@/lib/notifications';
 
 interface Transaction {
   id: string;

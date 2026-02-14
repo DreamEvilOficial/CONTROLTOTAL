@@ -4,7 +4,7 @@ import React, { useEffect, useState, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 import ChatWindow from '@/components/ChatWindow';
-import { playNotificationSound, sendNotification } from '@/lib/notifications';
+import { sendNotification } from '@/lib/notifications';
 
 export default function AgentDashboard() {
   interface Player {
@@ -306,7 +306,7 @@ export default function AgentDashboard() {
                       <td className="py-3 font-bold">${tx.amount.toLocaleString()}</td>
                       <td className="py-3">
                         <span className={`text-xs px-2 py-1 rounded ${tx.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                            tx.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                          tx.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
                           }`}>
                           {tx.status}
                         </span>
