@@ -24,10 +24,8 @@ export default function LoginPage() {
       setPassword(savedPassword);
       setRememberMe(true);
     } else {
-      const lastUsername = localStorage.getItem('lastUsername');
-      if (lastUsername) {
-        setUsername(lastUsername);
-      }
+      const recent = localStorage.getItem('recentUsername') || localStorage.getItem('lastUsername');
+      if (recent) setUsername(recent);
     }
 
     // Load public config
