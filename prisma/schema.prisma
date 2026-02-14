@@ -64,6 +64,8 @@ model SystemConfig {
   metaAdAccountId String?
   metaPageId      String?
   metaPixelId     String?
+  telegramBotToken String?
+  telegramChatId   String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -94,6 +96,9 @@ model Transaction {
   withdrawalCvu   String?
   withdrawalAlias String?
   withdrawalBank  String?
+
+  // Evidence
+  screenshot      String?
 
   userId    String
   user      User     @relation("UserTransactions", fields: [userId], references: [id])

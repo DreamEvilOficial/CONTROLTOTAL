@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { verifyJWT } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
+import { sendTelegramMessage } from '@/lib/telegram';
 
 const transactionSchema = z.object({
   amount: z.number().positive(),
@@ -54,18 +55,19 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { amount, type, method, withdrawalCvu, withdrawalAlias, withdrawalBank } = z.object({
+    const { amount, type, method, withdrawalCvu, withdrawalAlias, withdrawalBank, screenshot } = z.object({
       amount: z.number().positive(),
       type: z.enum(['DEPOSIT', 'WITHDRAW']),
       method: z.enum(['MANUAL', 'AUTO', 'MP']).optional(),
       withdrawalCvu: z.string().optional(),
       withdrawalAlias: z.string().optional(),
       withdrawalBank: z.string().optional(),
+      screenshot: z.string().optional(),
     }).parse(body);
 
     const user = await prisma.user.findUnique({
       where: { id: playerPayload.id as string },
-      include: { manager: true },
+      include: { manager: true, platform: true },
     });
 
     if (!user) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
@@ -85,17 +87,17 @@ export async function POST(request: Request) {
     const systemConfig = await prisma.systemConfig.findUnique({ where: { id: 'config' } });
     const agentMp = user.manager?.mpEnabled && user.manager?.mpAccessToken;
     const systemMp = !!systemConfig?.mpAccessToken;
-    
-    // Si es depósito AUTO y hay MP configurado, generar monto con decimales
-    if (type === 'DEPOSIT' && method === 'AUTO' && (agentMp || systemMp)) {
+
+    // Si es depósito, generar monto con decimales para identificación manual
+    if (type === 'DEPOSIT') {
       let unique = false;
       let attempts = 0;
-      
+
       while (!unique && attempts < 10) {
         // Generar decimal aleatorio entre 0.01 y 0.99
         const decimal = Math.floor(Math.random() * 99) + 1;
         const candidate = amount + (decimal / 100);
-        
+
         // Check for collision with other PENDING transactions
         const existing = await prisma.transaction.findFirst({
           where: {
@@ -104,7 +106,7 @@ export async function POST(request: Request) {
             expectedAmount: candidate
           }
         });
-        
+
         if (!existing) {
           expectedAmount = candidate;
           unique = true;
@@ -120,21 +122,35 @@ export async function POST(request: Request) {
         type,
         method,
         userId: user.id,
-        agentId: user.managerId, // Can be null if using system config
+        agentId: user.managerId,
         status: 'PENDING',
         withdrawalCvu,
         withdrawalAlias,
         withdrawalBank,
+        screenshot,
       } as any,
     });
+
+    // Enviar notificación por Telegram
+    const emoji = type === 'DEPOSIT' ? '📥' : '📤';
+    const amountStr = expectedAmount ? expectedAmount.toFixed(2) : amount.toLocaleString();
+    const msg = `
+<b>${emoji} Nueva Petición de ${type === 'DEPOSIT' ? 'CARGA' : 'RETIRO'}</b>
+<b>Usuario:</b> ${user.username}
+<b>Monto:</b> $${amountStr}
+<b>Plataforma:</b> ${user.platform?.name || 'N/A'}
+${type === 'DEPOSIT' ? 'Por favor revisa el panel para confirmar.' : 'Datos de retiro disponibles en el panel.'}
+    `.trim();
+
+    await sendTelegramMessage(msg);
 
     console.log(`[TRANSACTION CREATED] ID: ${transaction.id}, User: ${user.username}, Amount: ${amount}, Type: ${type}, Method: ${method || 'N/A'}, Expected: ${expectedAmount}`);
 
     return NextResponse.json(transaction);
   } catch (error) {
     console.error('[TRANSACTION ERROR]', error);
-    return NextResponse.json({ 
-      error: error instanceof Error ? error.message : 'Error creando transacción' 
+    return NextResponse.json({
+      error: error instanceof Error ? error.message : 'Error creando transacción'
     }, { status: 400 });
   }
 }

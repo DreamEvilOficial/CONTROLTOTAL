@@ -3,7 +3,7 @@
 import { useEffect, useState, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, Wallet, ArrowUpCircle, ArrowDownCircle, History, MessageCircle, CheckCircle, Clock, XCircle, RefreshCw, Key, Lock, ExternalLink, Copy, Check, ShieldCheck, Zap, Coins, CreditCard } from 'lucide-react';
+import { LogOut, Wallet, ArrowUpCircle, ArrowDownCircle, History, MessageCircle, CheckCircle, Clock, XCircle, RefreshCw, Key, Lock, ExternalLink, Copy, Check, ShieldCheck, Zap, Coins, CreditCard, Image } from 'lucide-react';
 import ChatWindow from '@/components/ChatWindow';
 import SupportChat from '@/components/SupportChat';
 
@@ -27,6 +27,7 @@ export default function PlayerDashboard() {
   const [passwordForm, setPasswordForm] = useState({ password: '', confirmPassword: '' });
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [amount, setAmount] = useState('');
+  const [screenshot, setScreenshot] = useState<string | null>(null);
   const [withdrawDetails, setWithdrawDetails] = useState({ cvu: '', alias: '', bank: '' });
   const [selectedTx, setSelectedTx] = useState<string | null>(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
@@ -130,12 +131,17 @@ export default function PlayerDashboard() {
     const res = await fetch('/api/player/transactions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: parseFloat(amount), type }),
+      body: JSON.stringify({
+        amount: parseFloat(amount),
+        type,
+        screenshot
+      }),
     });
 
     if (res.ok) {
       const tx = await res.json();
       setAmount('');
+      setScreenshot(null);
       setShowDepositModal(false);
       setShowWithdrawModal(false);
       fetchTransactions();
@@ -708,6 +714,49 @@ export default function PlayerDashboard() {
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)}
               />
 
+              {showDepositModal && (
+                <div className="mb-6">
+                  <label className="text-sm text-gray-400 mb-2 block font-medium">Comprobante de Pago (Opcional):</label>
+                  <div className="relative group">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      id="screenshot-upload"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setScreenshot(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="screenshot-upload"
+                      className="flex flex-col items-center justify-center w-full h-32 bg-black/40 border-2 border-dashed border-white/10 rounded-xl cursor-pointer hover:border-primary/50 hover:bg-black/60 transition-all group"
+                    >
+                      {screenshot ? (
+                        <div className="relative w-full h-full p-2">
+                          <img src={screenshot} alt="Preview" className="w-full h-full object-contain rounded-lg shadow-lg" />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                            <RefreshCw className="w-6 h-6 text-white" />
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <Image className="w-8 h-8 text-gray-500 mb-2 group-hover:text-primary transition-colors" />
+                          <span className="text-xs text-gray-500 group-hover:text-gray-300 transition-colors font-medium">Subir Imagen / Captura</span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                  <p className="text-[10px] text-gray-600 mt-2 text-center italic">Formatos admitidos: JPG, PNG. Máx 5MB.</p>
+                </div>
+              )}
+
               {showWithdrawModal && (
                 <div className="space-y-4 mb-6">
                   <p className="text-sm text-gray-400">Datos para recibir la transferencia:</p>
@@ -801,7 +850,11 @@ export default function PlayerDashboard() {
                             </p>
                             <p className="text-gray-300 text-lg">Transfiere EXACTAMENTE:</p>
                             <p className="text-4xl font-black text-white text-glow my-3 tracking-tight">
-                              ${selectedTransactionData.amount.toLocaleString()}
+                              ${selectedTransactionData.expectedAmount ? selectedTransactionData.expectedAmount.toFixed(2) : selectedTransactionData.amount.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-secondary font-bold bg-secondary/10 px-3 py-1.5 rounded-lg border border-secondary/20 flex items-center gap-2">
+                              <ShieldCheck className="w-4 h-4" />
+                              Transfiere el monto EXACTO incluyendo los decimales para identificación inmediata.
                             </p>
                           </div>
 

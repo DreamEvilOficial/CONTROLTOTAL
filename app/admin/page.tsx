@@ -28,7 +28,10 @@ import {
   RefreshCw,
   Edit,
   Key,
-  Megaphone
+  Megaphone,
+  Lock,
+  ExternalLink,
+  Image
 } from 'lucide-react';
 import MarketingTab from '@/components/MarketingTab';
 import { sendNotification } from '@/lib/notifications';
@@ -107,6 +110,8 @@ interface Config {
   whatsappNumber: string;
   mpAccessToken: string;
   mpPublicKey: string;
+  telegramBotToken: string;
+  telegramChatId: string;
 }
 
 interface Platform {
@@ -125,7 +130,7 @@ export default function AdminDashboard() {
   const [activity, setActivity] = useState<ActivityData | null>(null);
   const [cvus, setCvus] = useState<Cvu[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [config, setConfig] = useState<Config>({ whatsappNumber: '', mpAccessToken: '', mpPublicKey: '' });
+  const [config, setConfig] = useState<Config>({ whatsappNumber: '', mpAccessToken: '', mpPublicKey: '', telegramBotToken: '', telegramChatId: '' });
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [newUsersCount, setNewUsersCount] = useState(0);
   const [newTxCount, setNewTxCount] = useState(0);
@@ -140,6 +145,7 @@ export default function AdminDashboard() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editingPlatform, setEditingPlatform] = useState<Platform | null>(null);
   const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [showScreenshot, setShowScreenshot] = useState<string | null>(null);
 
   // Chat state
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -297,6 +303,8 @@ export default function AdminDashboard() {
           whatsappNumber: data.whatsappNumber || '',
           mpAccessToken: data.mpAccessToken || '',
           mpPublicKey: data.mpPublicKey || '',
+          telegramBotToken: data.telegramBotToken || '',
+          telegramChatId: data.telegramChatId || '',
         });
       }
     } catch (error) {
@@ -831,6 +839,15 @@ export default function AdminDashboard() {
                                   {tx.withdrawalCvu && <p>CVU: <span className="text-white select-all">{tx.withdrawalCvu}</span></p>}
                                   {tx.withdrawalAlias && <p>Alias: <span className="text-white select-all">{tx.withdrawalAlias}</span></p>}
                                   {tx.withdrawalBank && <p>Banco: <span className="text-white select-all">{tx.withdrawalBank}</span></p>}
+                                  {(tx as any).screenshot && (
+                                    <button
+                                      onClick={() => setShowScreenshot((tx as any).screenshot)}
+                                      className="mt-2 flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
+                                    >
+                                      <Image className="w-4 h-4" />
+                                      Ver Comprobante
+                                    </button>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -1364,6 +1381,32 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
+                <div className="border-t border-white/10 pt-6">
+                  <h4 className="text-lg font-bold mb-4 text-primary">Notificaciones Telegram</h4>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm text-gray-400 mb-1 block">Bot Token</label>
+                      <input
+                        type="password"
+                        value={config.telegramBotToken}
+                        onChange={(e) => setConfig({ ...config, telegramBotToken: e.target.value })}
+                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                        placeholder="123456789:ABC..."
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-400 mb-1 block">Chat ID (Grupo de Admin)</label>
+                      <input
+                        type="text"
+                        value={config.telegramChatId}
+                        onChange={(e) => setConfig({ ...config, telegramChatId: e.target.value })}
+                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
+                        placeholder="-100..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <button
                   type="submit"
                   disabled={savingConfig}
@@ -1593,6 +1636,17 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+      {showScreenshot && (
+        <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-8" onClick={() => setShowScreenshot(null)}>
+          <div className="relative max-w-4xl max-h-full">
+            <button className="absolute -top-12 right-0 text-white flex items-center gap-2 font-bold px-4 py-2 hover:bg-white/10 rounded-xl transition-all">
+              <X className="w-6 h-6" />
+              CERRAR
+            </button>
+            <img src={showScreenshot} alt="Comprobante" className="rounded-2xl shadow-2xl border border-white/10 max-w-full max-h-[80vh] object-contain" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
