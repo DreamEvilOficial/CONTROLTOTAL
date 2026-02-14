@@ -30,28 +30,34 @@ export async function GET(req: Request) {
           { senderId: user.id, receiverId: targetUserId },
           { senderId: targetUserId, receiverId: user.id },
         ],
-        transactionId: null,
       },
       orderBy: { createdAt: 'asc' },
-      include: { 
-        sender: { select: { username: true, role: true } } 
+      include: {
+        sender: { select: { username: true, role: true } }
       }
     });
+
+    // Mark messages as read
+    await prisma.message.updateMany({
+      where: {
+        senderId: targetUserId,
+        receiverId: user.id,
+        read: false,
+      },
+      data: { read: true }
+    });
+
     return NextResponse.json(messages);
-  } 
-  
+  }
+
   // If Admin is requesting list of conversations (no userId provided)
   if (user.role === 'ADMIN') {
-    // Find all users who have sent messages to admin or received from admin (where transactionId is null)
-    // This is a bit complex in Prisma without raw query for distinct.
-    // We'll fetch all messages involving admin and group them in JS for now (not efficient for scale but works for MVP)
     const messages = await prisma.message.findMany({
       where: {
         OR: [
           { senderId: user.id },
           { receiverId: user.id },
         ],
-        transactionId: null,
       },
       orderBy: { createdAt: 'desc' },
       include: {
@@ -68,11 +74,11 @@ export async function GET(req: Request) {
         conversations.set(otherUser.id, {
           user: otherUser,
           lastMessage: msg,
-          unreadCount: (msg.senderId !== user.id && !(msg as any).read) ? 1 : 0
+          unreadCount: (msg.senderId !== user.id && !msg.read) ? 1 : 0
         });
       } else {
         const conv = conversations.get(otherUser.id);
-        if (msg.senderId !== user.id && !(msg as any).read) {
+        if (msg.senderId !== user.id && !msg.read) {
           conv.unreadCount++;
         }
       }
@@ -88,10 +94,19 @@ export async function GET(req: Request) {
         { senderId: user.id },
         { receiverId: user.id },
       ],
-      transactionId: null,
     },
     orderBy: { createdAt: 'asc' },
     include: { sender: { select: { username: true, role: true } } }
+  });
+
+  // Mark messages from admin to user as read
+  await prisma.message.updateMany({
+    where: {
+      senderId: { not: user.id },
+      receiverId: user.id,
+      read: false,
+    },
+    data: { read: true }
   });
 
   return NextResponse.json(messages);
@@ -108,15 +123,11 @@ export async function POST(req: Request) {
     let finalReceiverId = receiverId;
 
     if (user.role !== 'ADMIN') {
-      // User sending to Admin
-      // Find the admin user (assuming there is one main admin)
-      // We can search by role 'ADMIN'
       const admin = await prisma.user.findFirst({
         where: { role: 'ADMIN' },
       });
-      
+
       if (!admin) {
-        // Fallback: try to find 'admin' username
         const adminUser = await prisma.user.findUnique({ where: { username: 'admin' } });
         if (!adminUser) return NextResponse.json({ error: 'Admin unavailable' }, { status: 500 });
         finalReceiverId = adminUser.id;
@@ -124,8 +135,7 @@ export async function POST(req: Request) {
         finalReceiverId = admin.id;
       }
     } else {
-        // Admin sending to User
-        if (!finalReceiverId) return NextResponse.json({ error: 'Receiver required' }, { status: 400 });
+      if (!finalReceiverId) return NextResponse.json({ error: 'Receiver required' }, { status: 400 });
     }
 
     const message = await prisma.message.create({
@@ -164,7 +174,6 @@ export async function DELETE(req: Request) {
           { senderId: user.id, receiverId: targetUserId },
           { senderId: targetUserId, receiverId: user.id },
         ],
-        transactionId: null,
       },
     });
 

@@ -42,6 +42,7 @@ export default function PlayerDashboard() {
   const [copiedPass, setCopiedPass] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [newLink, setNewLink] = useState('');
+  const [showOutcomeModal, setShowOutcomeModal] = useState<any>(null);
 
   const handleCopy = (text: string, type: 'user' | 'pass' | 'url') => {
     navigator.clipboard.writeText(text);
@@ -120,6 +121,24 @@ export default function PlayerDashboard() {
   const acknowledgeNewLink = () => {
     localStorage.setItem(`last_link_${stats.platformName}`, stats.platformUrl);
     setShowLinkModal(false);
+  };
+
+  useEffect(() => {
+    if (transactions.length > 0) {
+      const pendingNotification = transactions.find(tx =>
+        (tx.status === 'COMPLETED' || tx.status === 'REJECTED') &&
+        !localStorage.getItem(`ack_tx_${tx.id}`)
+      );
+
+      if (pendingNotification && !showOutcomeModal) {
+        setShowOutcomeModal(pendingNotification);
+      }
+    }
+  }, [transactions, showOutcomeModal]);
+
+  const acknowledgeOutcome = (txId: string) => {
+    localStorage.setItem(`ack_tx_${txId}`, 'true');
+    setShowOutcomeModal(null);
   };
 
   const handleCreatePreference = async () => {
@@ -970,7 +989,7 @@ export default function PlayerDashboard() {
                     </div>
                   )}
 
-                  {selectedTransactionData?.status !== 'PENDING' && (
+                  {selectedTransactionData && selectedTransactionData.status !== 'PENDING' && (
                     <div className={`p-6 rounded-xl border ${selectedTransactionData?.status === 'COMPLETED'
                       ? 'bg-green-500/10 border-green-500/20'
                       : 'bg-red-500/10 border-red-500/20'
@@ -1134,6 +1153,50 @@ export default function PlayerDashboard() {
                   Confirmar y Cerrar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showOutcomeModal && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-[60] animate-in fade-in duration-300">
+          <div className="w-full max-w-md glass rounded-3xl p-8 border border-white/10 shadow-2xl text-center relative overflow-hidden">
+            <div className={`absolute -top-24 -left-24 w-48 h-48 ${showOutcomeModal.status === 'COMPLETED' ? 'bg-green-500/20' : 'bg-red-500/20'} rounded-full blur-3xl`}></div>
+
+            <div className="relative z-10">
+              <div className={`w-20 h-20 ${showOutcomeModal.status === 'COMPLETED' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
+                {showOutcomeModal.status === 'COMPLETED' ? <CheckCircle className="w-10 h-10" /> : <XCircle className="w-10 h-10" />}
+              </div>
+
+              <h2 className="text-3xl font-black text-white mb-2 tracking-tight">
+                {showOutcomeModal.status === 'COMPLETED' ? '¡OPERACIÓN EXITOSA!' : 'OPERACIÓN RECHAZADA'}
+              </h2>
+
+              <p className="text-gray-400 mb-8 leading-relaxed">
+                {showOutcomeModal.status === 'COMPLETED'
+                  ? (showOutcomeModal.type === 'DEPOSIT'
+                    ? 'Tus fichas han sido cargadas exitosamente en tu cuenta. ¡Buena suerte!'
+                    : '¡El retiro ha sido enviado a tu cuenta con éxito!')
+                  : 'Lo sentimos, tu operación ha sido rechazada por el administrador. Revisa el chat para más detalles.'}
+              </p>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-8">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold">Monto</span>
+                  <span className="text-white font-bold">${showOutcomeModal.amount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold">Tipo</span>
+                  <span className="text-white font-bold">{showOutcomeModal.type === 'DEPOSIT' ? 'Depósito' : 'Retiro'}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => acknowledgeOutcome(showOutcomeModal.id)}
+                className={`w-full ${showOutcomeModal.status === 'COMPLETED' ? 'bg-green-500' : 'bg-red-500'} text-black font-black py-4 rounded-xl hover:opacity-90 transition-all shadow-lg text-lg`}
+              >
+                ENTENDIDO
+              </button>
             </div>
           </div>
         </div>

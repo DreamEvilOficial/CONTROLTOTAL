@@ -22,6 +22,16 @@ export async function GET(
     include: { sender: { select: { name: true, role: true } } },
   });
 
+  // Mark these messages as read
+  await prisma.message.updateMany({
+    where: {
+      transactionId: params.id,
+      receiverId: user.id,
+      read: false,
+    },
+    data: { read: true }
+  });
+
   return NextResponse.json(messages);
 }
 
@@ -43,10 +53,18 @@ export async function POST(
     }
 
     // Determine receiver
-    const receiverId = user.id === transaction.userId ? transaction.agentId : transaction.userId;
-    
+    let receiverId = user.id === transaction.userId ? transaction.agentId : transaction.userId;
+
+    // If player is sending and no agent assigned, send to Admin
+    if (!receiverId && user.id === transaction.userId) {
+      const admin = await prisma.user.findFirst({
+        where: { role: 'ADMIN' },
+      });
+      receiverId = admin?.id || null;
+    }
+
     if (!receiverId) {
-       return NextResponse.json({ error: 'Receiver not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Receiver not found' }, { status: 404 });
     }
 
     const message = await prisma.message.create({
@@ -61,6 +79,7 @@ export async function POST(
 
     return NextResponse.json(message);
   } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: 'Error sending message' }, { status: 500 });
   }
 }
