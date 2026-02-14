@@ -698,7 +698,6 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        {activeTab === 'marketing' && <MarketingTab />}
 
         {activeTab === 'overview' && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -840,6 +839,31 @@ export default function AdminDashboard() {
                           </div>
 
                           <div className="flex items-center gap-3 w-full md:w-auto">
+                            {/* Chat Notification Button */}
+                            {conversations.find(c => c.user.id === tx.user.id)?.unreadCount ? (
+                              <button
+                                onClick={() => {
+                                  setActiveTab('support');
+                                  setSelectedChatUser({ id: tx.user.id, username: tx.user.username });
+                                }}
+                                className="flex-1 md:flex-none px-4 py-2 rounded-lg bg-primary text-black font-bold text-sm transition-all hover:scale-105 flex items-center justify-center gap-2 animate-pulse shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                                Responder Chat
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setActiveTab('support');
+                                  setSelectedChatUser({ id: tx.user.id, username: tx.user.username });
+                                }}
+                                className="flex-1 md:flex-none px-4 py-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                                <span className="hidden md:inline">Abrir Soporte</span>
+                              </button>
+                            )}
+
                             {tx.type === 'DEPOSIT' && (
                               <button
                                 onClick={() => checkPayment(tx.id)}
@@ -909,7 +933,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
-
         {activeTab === 'players' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Create User Form */}

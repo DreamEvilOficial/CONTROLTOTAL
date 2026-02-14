@@ -107,7 +107,6 @@ export default function PlayerDashboard() {
     }
   };
 
-  // Check for platform link change
   useEffect(() => {
     if (stats.platformUrl && stats.platformName) {
       const lastLink = localStorage.getItem(`last_link_${stats.platformName}`);
@@ -115,9 +114,13 @@ export default function PlayerDashboard() {
         setNewLink(stats.platformUrl);
         setShowLinkModal(true);
       }
-      localStorage.setItem(`last_link_${stats.platformName}`, stats.platformUrl);
     }
   }, [stats.platformUrl, stats.platformName]);
+
+  const acknowledgeNewLink = () => {
+    localStorage.setItem(`last_link_${stats.platformName}`, stats.platformUrl);
+    setShowLinkModal(false);
+  };
 
   const handleCreatePreference = async () => {
     if (!selectedTx) return;
@@ -1118,17 +1121,17 @@ export default function PlayerDashboard() {
                   href={newLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => setShowLinkModal(false)}
+                  onClick={acknowledgeNewLink}
                   className="w-full bg-primary text-black font-black py-4 rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 text-lg"
                 >
                   IR A LA PLATAFORMA
                   <ExternalLink className="w-5 h-5" />
                 </a>
                 <button
-                  onClick={() => setShowLinkModal(false)}
+                  onClick={acknowledgeNewLink}
                   className="text-gray-500 hover:text-white transition-colors text-sm font-bold py-2"
                 >
-                  Cerrar
+                  Confirmar y Cerrar
                 </button>
               </div>
             </div>
