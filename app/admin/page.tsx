@@ -31,6 +31,7 @@ import {
   Megaphone
 } from 'lucide-react';
 import MarketingTab from '@/components/MarketingTab';
+import { playNotificationSound, sendNotification } from '@/lib/notifications';
 
 interface Transaction {
   id: string;
@@ -258,9 +259,7 @@ export default function AdminDashboard() {
         const len = Array.isArray(data) ? data.length : 0;
         if (len > prevTxLen) {
           setNewTxCount(len - prevTxLen);
-          if (notificationsEnabled) {
-            try { new Notification('Nueva petición pendiente'); } catch { }
-          }
+          sendNotification('Nueva petición pendiente', 'Hay nuevas solicitudes de carga/retiro.');
         }
         setPrevTxLen(len);
       }
@@ -321,9 +320,7 @@ export default function AdminDashboard() {
         const len = Array.isArray(data) ? data.length : 0;
         if (len > prevUsersLen) {
           setNewUsersCount(len - prevUsersLen);
-          if (notificationsEnabled) {
-            try { new Notification('Nuevo jugador registrado'); } catch { }
-          }
+          sendNotification('Nuevo jugador registrado', 'Un nuevo jugador se ha unido a la plataforma.');
         }
         setPrevUsersLen(len);
       }
@@ -590,8 +587,8 @@ export default function AdminDashboard() {
           <button
             onClick={() => setActiveTab('overview')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'overview'
-                ? 'bg-primary text-black shadow-lg shadow-primary/20'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              ? 'bg-primary text-black shadow-lg shadow-primary/20'
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
           >
             <BarChart3 className="w-4 h-4" />
@@ -605,8 +602,8 @@ export default function AdminDashboard() {
           <button
             onClick={() => setActiveTab('players')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'players'
-                ? 'bg-primary text-black shadow-lg shadow-primary/20'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              ? 'bg-primary text-black shadow-lg shadow-primary/20'
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
           >
             <Users className="w-4 h-4" />
@@ -620,8 +617,8 @@ export default function AdminDashboard() {
           <button
             onClick={() => setActiveTab('cvus')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'cvus'
-                ? 'bg-primary text-black shadow-lg shadow-primary/20'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              ? 'bg-primary text-black shadow-lg shadow-primary/20'
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
           >
             <CreditCard className="w-4 h-4" />
@@ -630,8 +627,8 @@ export default function AdminDashboard() {
           <button
             onClick={() => setActiveTab('marketing')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'marketing'
-                ? 'bg-primary text-black shadow-lg shadow-primary/20'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              ? 'bg-primary text-black shadow-lg shadow-primary/20'
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
           >
             <Megaphone className="w-4 h-4" />
@@ -640,8 +637,8 @@ export default function AdminDashboard() {
           <button
             onClick={() => setActiveTab('config')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'config'
-                ? 'bg-primary text-black shadow-lg shadow-primary/20'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              ? 'bg-primary text-black shadow-lg shadow-primary/20'
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
           >
             <Settings className="w-4 h-4" />
@@ -650,8 +647,8 @@ export default function AdminDashboard() {
           <button
             onClick={() => setActiveTab('platforms')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'platforms'
-                ? 'bg-primary text-black shadow-lg shadow-primary/20'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              ? 'bg-primary text-black shadow-lg shadow-primary/20'
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
           >
             <Gamepad2 className="w-4 h-4" />
@@ -660,8 +657,8 @@ export default function AdminDashboard() {
           <button
             onClick={() => setActiveTab('support')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'support'
-                ? 'bg-primary text-black shadow-lg shadow-primary/20'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+              ? 'bg-primary text-black shadow-lg shadow-primary/20'
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
           >
             <MessageCircle className="w-4 h-4" />
@@ -1425,8 +1422,8 @@ export default function AdminDashboard() {
                       >
                         <div
                           className={`max-w-[80%] p-3 rounded-2xl ${msg.sender.role === 'ADMIN'
-                              ? 'bg-primary text-black rounded-tr-none'
-                              : 'bg-white/10 text-white rounded-tl-none'
+                            ? 'bg-primary text-black rounded-tr-none'
+                            : 'bg-white/10 text-white rounded-tl-none'
                             }`}
                         >
                           <p className="text-sm">{msg.content}</p>

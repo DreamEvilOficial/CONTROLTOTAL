@@ -4,6 +4,7 @@ import React, { useEffect, useState, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 import ChatWindow from '@/components/ChatWindow';
+import { playNotificationSound, sendNotification } from '@/lib/notifications';
 
 export default function AgentDashboard() {
   interface Player {
@@ -36,18 +37,28 @@ export default function AgentDashboard() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedTx, setSelectedTx] = useState<string | null>(null);
-  
+
   // Forms
   const [newPlayer, setNewPlayer] = useState({ name: '', username: '', password: '' });
-  
+
   // MP Config
   const [mpConfig, setMpConfig] = useState<MpConfig>({ mpAccessToken: '', mpEnabled: false });
+  const [prevTxLen, setPrevTxLen] = useState(0);
+  const [prevPlayersLen, setPrevPlayersLen] = useState(0);
 
   useEffect(() => {
     fetchStats();
     fetchPlayers();
     fetchTransactions();
     fetchMpConfig();
+
+    const interval = setInterval(() => {
+      fetchStats();
+      fetchPlayers();
+      fetchTransactions();
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const fetchMpConfig = async () => {
@@ -76,17 +87,33 @@ export default function AgentDashboard() {
 
   const fetchPlayers = async () => {
     const res = await fetch('/api/agent/players');
-    if (res.ok) setPlayers(await res.json());
+    if (res.ok) {
+      const data = await res.json();
+      setPlayers(data);
+      const len = Array.isArray(data) ? data.length : 0;
+      if (len > prevPlayersLen) {
+        sendNotification('Nuevo jugador registrado', 'Un nuevo jugador se ha unido a tu red.');
+      }
+      setPrevPlayersLen(len);
+    }
   };
 
   const fetchTransactions = async () => {
     const res = await fetch('/api/agent/transactions');
-    if (res.ok) setTransactions(await res.json());
+    if (res.ok) {
+      const data = await res.json();
+      setTransactions(data);
+      const len = Array.isArray(data) ? data.length : 0;
+      if (len > prevTxLen) {
+        sendNotification('Nueva petición pendiente', 'Tienes nuevas solicitudes de carga/retiro.');
+      }
+      setPrevTxLen(len);
+    }
   };
 
   const updateTransactionStatus = async (id: string, status: 'COMPLETED' | 'REJECTED') => {
     if (!confirm(`¿Estás seguro de marcar esta transacción como ${status}?`)) return;
-    
+
     const res = await fetch(`/api/transactions/${id}/status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -164,7 +191,7 @@ export default function AgentDashboard() {
           <div className="bg-white p-6 rounded-lg shadow max-w-2xl">
             <h2 className="text-xl font-bold mb-4">Integración MercadoPago</h2>
             <p className="text-gray-600 mb-4 text-sm">
-              Configura tu Access Token de MercadoPago para recibir transferencias automatizadas. 
+              Configura tu Access Token de MercadoPago para recibir transferencias automatizadas.
               El sistema verificará pagos automáticamente si está habilitado.
             </p>
             <form onSubmit={updateMpConfig} className="space-y-4">
@@ -175,7 +202,7 @@ export default function AgentDashboard() {
                   placeholder="TEST-1234..."
                   className="w-full p-2 border rounded mt-1"
                   value={mpConfig.mpAccessToken || ''}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setMpConfig({...mpConfig, mpAccessToken: e.target.value})}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setMpConfig({ ...mpConfig, mpAccessToken: e.target.value })}
                 />
               </div>
               <div className="flex items-center space-x-2">
@@ -183,7 +210,7 @@ export default function AgentDashboard() {
                   type="checkbox"
                   id="mpEnabled"
                   checked={mpConfig.mpEnabled}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setMpConfig({...mpConfig, mpEnabled: e.target.checked})}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setMpConfig({ ...mpConfig, mpEnabled: e.target.checked })}
                   className="h-4 w-4 text-blue-600"
                 />
                 <label htmlFor="mpEnabled" className="text-sm font-medium text-gray-700">Habilitar Pagos Automáticos</label>
@@ -205,7 +232,7 @@ export default function AgentDashboard() {
                   placeholder="Nombre"
                   className="w-full p-2 border rounded"
                   value={newPlayer.name}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPlayer({...newPlayer, name: e.target.value})}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPlayer({ ...newPlayer, name: e.target.value })}
                   required
                 />
                 <input
@@ -213,7 +240,7 @@ export default function AgentDashboard() {
                   placeholder="Usuario"
                   className="w-full p-2 border rounded"
                   value={newPlayer.username}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPlayer({...newPlayer, username: e.target.value})}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPlayer({ ...newPlayer, username: e.target.value })}
                   required
                 />
                 <input
@@ -221,7 +248,7 @@ export default function AgentDashboard() {
                   placeholder="Contraseña"
                   className="w-full p-2 border rounded"
                   value={newPlayer.password}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPlayer({...newPlayer, password: e.target.value})}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPlayer({ ...newPlayer, password: e.target.value })}
                   required
                 />
                 <button type="submit" className="w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
@@ -271,18 +298,16 @@ export default function AgentDashboard() {
                       <td className="py-3 text-sm">{new Date(tx.createdAt).toLocaleDateString()}</td>
                       <td className="py-3 font-medium">{tx.user.name}</td>
                       <td className="py-3">
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          tx.type === 'DEPOSIT' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`px-2 py-1 rounded text-xs ${tx.type === 'DEPOSIT' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
                           {tx.type === 'DEPOSIT' ? 'Depósito' : 'Retiro'}
                         </span>
                       </td>
                       <td className="py-3 font-bold">${tx.amount.toLocaleString()}</td>
                       <td className="py-3">
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          tx.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                          tx.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                        }`}>
+                        <span className={`text-xs px-2 py-1 rounded ${tx.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                            tx.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                          }`}>
                           {tx.status}
                         </span>
                       </td>

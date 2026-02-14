@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { User, Lock, ArrowRight, Gamepad2, Gift } from 'lucide-react';
+import { User, Lock, ArrowRight, Gamepad2, Gift, Phone } from 'lucide-react';
 
 interface Platform {
   id: string;
@@ -18,8 +18,9 @@ export default function RegisterPage() {
     username: '',
     password: '',
     platformId: '',
-    whatsapp: '+54',
+    whatsapp: '',
   });
+  const [localPhone, setLocalPhone] = useState('');
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -54,6 +55,13 @@ export default function RegisterPage() {
       return;
     }
 
+    const digits = localPhone.replace(/\D/g, '');
+    if (digits.length !== 10) {
+      setError('Ingresa un WhatsApp válido: +54 9 y 10 dígitos');
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
@@ -79,6 +87,7 @@ export default function RegisterPage() {
         const role = (loginData.user as { role: string }).role;
 
         // Save for login page later
+        localStorage.setItem('recentUsername', formData.username);
         localStorage.setItem('lastUsername', formData.username);
 
         if (role === 'ADMIN') router.push('/admin');
@@ -166,20 +175,28 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300 ml-1">Número de Teléfono</label>
+              <label className="text-sm font-medium text-gray-300 ml-1">WhatsApp</label>
               <div className="relative group">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-gray-500 group-focus-within:text-primary transition-colors">
-                  <span className="text-sm font-bold">AR</span>
-                  <span className="w-px h-4 bg-white/10 mx-1"></span>
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-primary transition-colors" />
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 bg-black/30 border border-white/10 border-r-0 rounded-l-xl text-gray-400 select-none">
+                    +54 9
+                  </span>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    required
+                    className="w-full pr-4 py-3 bg-black/20 border border-white/10 border-l-0 rounded-r-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all pl-3"
+                    placeholder="11 2345 6789"
+                    value={localPhone}
+                    onChange={(e) => {
+                      const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setLocalPhone(onlyDigits);
+                      setFormData(prev => ({ ...prev, whatsapp: `549${onlyDigits}` }));
+                    }}
+                  />
                 </div>
-                <input
-                  type="tel"
-                  required
-                  className="w-full pl-16 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                  placeholder="+54 9 11 1234-5678"
-                  value={formData.whatsapp}
-                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                />
+                <p className="text-xs text-gray-500 mt-1 ml-1">Formato: +54 9 + 10 dígitos (sin 0 ni 15)</p>
               </div>
             </div>
 
