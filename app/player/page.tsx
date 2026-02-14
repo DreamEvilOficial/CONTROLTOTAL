@@ -38,9 +38,11 @@ export default function PlayerDashboard() {
   const [paymentMethod, setPaymentMethod] = useState<'TRANSFER' | 'MP'>('TRANSFER');
   const [mpLink, setMpLink] = useState<string | null>(null);
   const [loadingMp, setLoadingMp] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
   const [copiedUser, setCopiedUser] = useState(false);
   const [copiedPass, setCopiedPass] = useState(false);
-  const [copiedUrl, setCopiedUrl] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [newLink, setNewLink] = useState('');
 
   const handleCopy = (text: string, type: 'user' | 'pass' | 'url') => {
     navigator.clipboard.writeText(text);
@@ -89,8 +91,12 @@ export default function PlayerDashboard() {
   };
 
   const fetchTransactions = async () => {
-    const res = await fetch('/api/player/transactions');
-    if (res.ok) setTransactions(await res.json());
+    try {
+      const res = await fetch('/api/player/transactions');
+      if (res.ok) setTransactions(await res.json());
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    }
   };
 
   const fetchActiveCvus = async () => {
@@ -102,11 +108,24 @@ export default function PlayerDashboard() {
     }
   };
 
+  // Check for platform link change
+  useEffect(() => {
+    if (stats.platformUrl && stats.platformName) {
+      const lastLink = localStorage.getItem(`last_link_${stats.platformName}`);
+      if (lastLink && lastLink !== stats.platformUrl) {
+        setNewLink(stats.platformUrl);
+        setShowLinkModal(true);
+      }
+      localStorage.setItem(`last_link_${stats.platformName}`, stats.platformUrl);
+    }
+  }, [stats.platformUrl, stats.platformName]);
+
   const handleCreatePreference = async () => {
     if (!selectedTx) return;
     setLoadingMp(true);
     try {
       const res = await fetch(`/api/transactions/${selectedTx}/preference`, { method: 'POST' });
+      if (!res.ok) throw new Error('Error en la respuesta del servidor');
       const data = await res.json();
       if (data.init_point) {
         setMpLink(data.init_point);
@@ -133,20 +152,17 @@ export default function PlayerDashboard() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         amount: parseFloat(amount),
-        type,
-        screenshot
+        type
       }),
     });
 
     if (res.ok) {
       const tx = await res.json();
       setAmount('');
-      setScreenshot(null);
       setShowDepositModal(false);
       setShowWithdrawModal(false);
       fetchTransactions();
 
-      // Open chat automatically for deposits
       if (type === 'DEPOSIT') {
         setSelectedTx(tx.id);
       } else {
@@ -177,18 +193,20 @@ export default function PlayerDashboard() {
     }
   };
 
-  // Auto-check logic for selected transaction
-  useEffect(() => {
-    if (!selectedTx) return;
-
-    const tx = transactions.find(t => t.id === selectedTx);
-    if (tx?.expectedAmount && tx.status === 'PENDING') {
-      const interval = setInterval(() => {
-        checkPayment(selectedTx);
-      }, 3000);
-      return () => clearInterval(interval);
+  const handleScreenshotUpdate = async (txId: string, base64: string) => {
+    try {
+      const res = await fetch(`/api/player/transactions/${txId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ screenshot: base64 }),
+      });
+      if (res.ok) {
+        fetchTransactions();
+      }
+    } catch (error) {
+      console.error('Error uploading screenshot:', error);
     }
-  }, [selectedTx, transactions]);
+  };
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -714,49 +732,6 @@ export default function PlayerDashboard() {
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)}
               />
 
-              {showDepositModal && (
-                <div className="mb-6">
-                  <label className="text-sm text-gray-400 mb-2 block font-medium">Comprobante de Pago (Opcional):</label>
-                  <div className="relative group">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      id="screenshot-upload"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setScreenshot(reader.result as string);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                    <label
-                      htmlFor="screenshot-upload"
-                      className="flex flex-col items-center justify-center w-full h-32 bg-black/40 border-2 border-dashed border-white/10 rounded-xl cursor-pointer hover:border-primary/50 hover:bg-black/60 transition-all group"
-                    >
-                      {screenshot ? (
-                        <div className="relative w-full h-full p-2">
-                          <img src={screenshot} alt="Preview" className="w-full h-full object-contain rounded-lg shadow-lg" />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
-                            <RefreshCw className="w-6 h-6 text-white" />
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <Image className="w-8 h-8 text-gray-500 mb-2 group-hover:text-primary transition-colors" />
-                          <span className="text-xs text-gray-500 group-hover:text-gray-300 transition-colors font-medium">Subir Imagen / Captura</span>
-                        </>
-                      )}
-                    </label>
-                  </div>
-                  <p className="text-[10px] text-gray-600 mt-2 text-center italic">Formatos admitidos: JPG, PNG. Máx 5MB.</p>
-                </div>
-              )}
-
               {showWithdrawModal && (
                 <div className="space-y-4 mb-6">
                   <p className="text-sm text-gray-400">Datos para recibir la transferencia:</p>
@@ -843,7 +818,7 @@ export default function PlayerDashboard() {
 
                       {paymentMethod === 'TRANSFER' ? (
                         <>
-                          <div className="bg-secondary/10 p-6 rounded-xl border border-secondary/20">
+                          <div className="bg-secondary/10 p-6 rounded-xl border border-secondary/20 mb-6">
                             <p className="font-bold text-secondary mb-2 flex items-center gap-2 text-lg">
                               <Clock className="w-5 h-5" />
                               Instrucciones de Pago
@@ -920,6 +895,54 @@ export default function PlayerDashboard() {
                                 <p className="text-xs mt-1">Por favor, consulta con soporte por el chat.</p>
                               </div>
                             )}
+                          </div>
+
+                          {/* Screenshot Upload Section (Optional) */}
+                          <div className="mt-8 border-t border-white/10 pt-6">
+                            <label className="text-sm font-bold text-gray-400 mb-4 block flex items-center gap-2">
+                              <Image className="w-4 h-4 text-primary" />
+                              Comprobante de Pago (Opcional)
+                            </label>
+                            <div className="relative group">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                id="screenshot-update"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                      handleScreenshotUpdate(selectedTx!, reader.result as string);
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor="screenshot-update"
+                                className="flex flex-col items-center justify-center w-full h-40 bg-black/40 border-2 border-dashed border-white/10 rounded-xl cursor-pointer hover:border-primary/50 hover:bg-black/60 transition-all group overflow-hidden"
+                              >
+                                {(selectedTransactionData as any).screenshot ? (
+                                  <div className="relative w-full h-full p-2">
+                                    <img src={(selectedTransactionData as any).screenshot} alt="Comprobante" className="w-full h-full object-contain rounded-lg" />
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <RefreshCw className="w-8 h-8 text-white mb-2" />
+                                      <span className="text-xs text-white font-bold">Cambiar Comprobante</span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="p-4 rounded-full bg-primary/10 text-primary mb-3 group-hover:scale-110 transition-transform">
+                                      <Image className="w-8 h-8" />
+                                    </div>
+                                    <span className="text-sm text-gray-400 group-hover:text-white transition-colors font-bold">Sube tu captura aquí</span>
+                                    <span className="text-[10px] text-gray-500 mt-2 italic">Ayuda al administrador a validar más rápido</span>
+                                  </>
+                                )}
+                              </label>
+                            </div>
                           </div>
                         </>
                       ) : (
@@ -1129,6 +1152,51 @@ export default function PlayerDashboard() {
 
         <SupportChat />
       </div>
+
+      {/* New Platform URL Modal */}
+      {showLinkModal && (
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 z-[100] animate-in fade-in duration-500">
+          <div className="w-full max-w-md glass rounded-3xl p-8 border border-primary/20 shadow-[0_0_50px_-12px_rgba(var(--primary-rgb),0.5)] text-center relative overflow-hidden">
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-secondary/10 rounded-full blur-3xl"></div>
+
+            <div className="relative z-10">
+              <div className="w-20 h-20 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                <ExternalLink className="w-10 h-10 text-primary" />
+              </div>
+
+              <h2 className="text-3xl font-black text-white mb-4 tracking-tight">¡NUEVA URL!</h2>
+              <p className="text-gray-400 mb-8 leading-relaxed">
+                Hemos actualizado el link de <span className="text-white font-bold">{stats.platformName}</span> para mejorar tu experiencia de juego.
+              </p>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-8">
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2 text-left">Link Actualizado</p>
+                <p className="text-primary font-mono text-lg break-all">{newLink}</p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <a
+                  href={newLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setShowLinkModal(false)}
+                  className="w-full bg-primary text-black font-black py-4 rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 text-lg"
+                >
+                  IR A LA PLATAFORMA
+                  <ExternalLink className="w-5 h-5" />
+                </a>
+                <button
+                  onClick={() => setShowLinkModal(false)}
+                  className="text-gray-500 hover:text-white transition-colors text-sm font-bold py-2"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
