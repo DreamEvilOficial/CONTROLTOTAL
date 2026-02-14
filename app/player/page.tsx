@@ -27,7 +27,6 @@ export default function PlayerDashboard() {
   const [passwordForm, setPasswordForm] = useState({ password: '', confirmPassword: '' });
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [amount, setAmount] = useState('');
-  const [screenshot, setScreenshot] = useState<string | null>(null);
   const [withdrawDetails, setWithdrawDetails] = useState({ cvu: '', alias: '', bank: '' });
   const [selectedTx, setSelectedTx] = useState<string | null>(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
@@ -193,20 +192,6 @@ export default function PlayerDashboard() {
     }
   };
 
-  const handleScreenshotUpdate = async (txId: string, base64: string) => {
-    try {
-      const res = await fetch(`/api/player/transactions/${txId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ screenshot: base64 }),
-      });
-      if (res.ok) {
-        fetchTransactions();
-      }
-    } catch (error) {
-      console.error('Error uploading screenshot:', error);
-    }
-  };
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -897,53 +882,6 @@ export default function PlayerDashboard() {
                             )}
                           </div>
 
-                          {/* Screenshot Upload Section (Optional) */}
-                          <div className="mt-8 border-t border-white/10 pt-6">
-                            <label className="text-sm font-bold text-gray-400 mb-4 block flex items-center gap-2">
-                              <Image className="w-4 h-4 text-primary" />
-                              Comprobante de Pago (Opcional)
-                            </label>
-                            <div className="relative group">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                id="screenshot-update"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                      handleScreenshotUpdate(selectedTx!, reader.result as string);
-                                    };
-                                    reader.readAsDataURL(file);
-                                  }
-                                }}
-                              />
-                              <label
-                                htmlFor="screenshot-update"
-                                className="flex flex-col items-center justify-center w-full h-40 bg-black/40 border-2 border-dashed border-white/10 rounded-xl cursor-pointer hover:border-primary/50 hover:bg-black/60 transition-all group overflow-hidden"
-                              >
-                                {(selectedTransactionData as any).screenshot ? (
-                                  <div className="relative w-full h-full p-2">
-                                    <img src={(selectedTransactionData as any).screenshot} alt="Comprobante" className="w-full h-full object-contain rounded-lg" />
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <RefreshCw className="w-8 h-8 text-white mb-2" />
-                                      <span className="text-xs text-white font-bold">Cambiar Comprobante</span>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <div className="p-4 rounded-full bg-primary/10 text-primary mb-3 group-hover:scale-110 transition-transform">
-                                      <Image className="w-8 h-8" />
-                                    </div>
-                                    <span className="text-sm text-gray-400 group-hover:text-white transition-colors font-bold">Sube tu captura aquí</span>
-                                    <span className="text-[10px] text-gray-500 mt-2 italic">Ayuda al administrador a validar más rápido</span>
-                                  </>
-                                )}
-                              </label>
-                            </div>
-                          </div>
                         </>
                       ) : (
                         <div className="space-y-6 text-center">

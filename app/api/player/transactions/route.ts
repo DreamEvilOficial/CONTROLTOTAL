@@ -54,14 +54,13 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { amount, type, method, withdrawalCvu, withdrawalAlias, withdrawalBank, screenshot } = z.object({
+    const { amount, type, method, withdrawalCvu, withdrawalAlias, withdrawalBank } = z.object({
       amount: z.number().positive(),
       type: z.enum(['DEPOSIT', 'WITHDRAW']),
       method: z.enum(['MANUAL', 'AUTO', 'MP']).optional(),
       withdrawalCvu: z.string().optional(),
       withdrawalAlias: z.string().optional(),
       withdrawalBank: z.string().optional(),
-      screenshot: z.string().optional(),
     }).parse(body);
 
     const user = await prisma.user.findUnique({
@@ -126,7 +125,6 @@ export async function POST(request: Request) {
         withdrawalCvu,
         withdrawalAlias,
         withdrawalBank,
-        screenshot,
       } as any,
     });
 

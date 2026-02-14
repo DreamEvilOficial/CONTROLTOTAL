@@ -95,8 +95,6 @@ model Transaction {
   withdrawalAlias String?
   withdrawalBank  String?
 
-  // Evidence
-  screenshot      String?
 
   userId    String
   user      User     @relation("UserTransactions", fields: [userId], references: [id])

@@ -143,7 +143,6 @@ export default function AdminDashboard() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editingPlatform, setEditingPlatform] = useState<Platform | null>(null);
   const [userSearchTerm, setUserSearchTerm] = useState('');
-  const [showScreenshot, setShowScreenshot] = useState<string | null>(null);
 
   // Chat state
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -835,15 +834,6 @@ export default function AdminDashboard() {
                                   {tx.withdrawalCvu && <p>CVU: <span className="text-white select-all">{tx.withdrawalCvu}</span></p>}
                                   {tx.withdrawalAlias && <p>Alias: <span className="text-white select-all">{tx.withdrawalAlias}</span></p>}
                                   {tx.withdrawalBank && <p>Banco: <span className="text-white select-all">{tx.withdrawalBank}</span></p>}
-                                  {(tx as any).screenshot && (
-                                    <button
-                                      onClick={() => setShowScreenshot((tx as any).screenshot)}
-                                      className="mt-2 flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
-                                    >
-                                      <Image className="w-4 h-4" />
-                                      Ver Comprobante
-                                    </button>
-                                  )}
                                 </div>
                               )}
                             </div>
@@ -1607,17 +1597,6 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
-      {showScreenshot && (
-        <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-8" onClick={() => setShowScreenshot(null)}>
-          <div className="relative max-w-4xl max-h-full">
-            <button className="absolute -top-12 right-0 text-white flex items-center gap-2 font-bold px-4 py-2 hover:bg-white/10 rounded-xl transition-all">
-              <X className="w-6 h-6" />
-              CERRAR
-            </button>
-            <img src={showScreenshot} alt="Comprobante" className="rounded-2xl shadow-2xl border border-white/10 max-w-full max-h-[80vh] object-contain" />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
