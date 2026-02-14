@@ -3,18 +3,18 @@
 import { useEffect, useState, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, Wallet, ArrowUpCircle, ArrowDownCircle, History, MessageCircle, CheckCircle, Clock, XCircle, RefreshCw, Key, Lock, ExternalLink, Copy, Check, ShieldCheck, Zap, Coins } from 'lucide-react';
+import { LogOut, Wallet, ArrowUpCircle, ArrowDownCircle, History, MessageCircle, CheckCircle, Clock, XCircle, RefreshCw, Key, Lock, ExternalLink, Copy, Check, ShieldCheck, Zap, Coins, CreditCard } from 'lucide-react';
 import ChatWindow from '@/components/ChatWindow';
 import SupportChat from '@/components/SupportChat';
 
 export default function PlayerDashboard() {
   const router = useRouter();
-  const [stats, setStats] = useState({ 
-    balance: 0, 
-    username: '', 
+  const [stats, setStats] = useState({
+    balance: 0,
+    username: '',
     platformName: '',
     platformUrl: '',
-    platformUser: '', 
+    platformUser: '',
     platformPassword: '',
     onboardingCompleted: false
   });
@@ -31,7 +31,7 @@ export default function PlayerDashboard() {
   const [selectedTx, setSelectedTx] = useState<string | null>(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [adminWhatsapp, setAdminWhatsapp] = useState<string | null>(null);
-  
+
   // Payment Method State
   const [depositMethod, setDepositMethod] = useState<'MANUAL' | 'AUTO' | 'MP'>('MANUAL');
   const [paymentMethod, setPaymentMethod] = useState<'TRANSFER' | 'MP'>('TRANSFER');
@@ -66,8 +66,8 @@ export default function PlayerDashboard() {
     fetchStats();
     fetchTransactions();
     fetchActiveCvus();
-    fetch('/api/config/public').then(r => r.json()).then(d => setAdminWhatsapp(d.whatsappNumber || null)).catch(() => {});
-    
+    fetch('/api/config/public').then(r => r.json()).then(d => setAdminWhatsapp(d.whatsappNumber || null)).catch(() => { });
+
     // Auto-refresh every 10s for updates
     const interval = setInterval(() => {
       fetchTransactions();
@@ -139,7 +139,7 @@ export default function PlayerDashboard() {
       setShowDepositModal(false);
       setShowWithdrawModal(false);
       fetchTransactions();
-      
+
       // Open chat automatically for deposits
       if (type === 'DEPOSIT') {
         setSelectedTx(tx.id);
@@ -174,7 +174,7 @@ export default function PlayerDashboard() {
   // Auto-check logic for selected transaction
   useEffect(() => {
     if (!selectedTx) return;
-    
+
     const tx = transactions.find(t => t.id === selectedTx);
     if (tx?.expectedAmount && tx.status === 'PENDING') {
       const interval = setInterval(() => {
@@ -251,7 +251,7 @@ export default function PlayerDashboard() {
         <div className="absolute top-0 left-0 w-full h-full bg-[url('/noise.png')] opacity-5 pointer-events-none"></div>
         <div className="absolute top-1/4 -right-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/4 -left-20 w-80 h-80 bg-secondary/5 rounded-full blur-3xl animate-pulse delay-700"></div>
-        
+
         <div className="max-w-md w-full bg-white/5 border border-white/10 rounded-3xl p-8 text-center space-y-8 relative z-10 backdrop-blur-2xl shadow-2xl shadow-black/50">
           <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
             <div className={`absolute inset-0 bg-primary/20 rounded-full ${!hasCredentials ? 'animate-ping' : ''}`}></div>
@@ -269,8 +269,8 @@ export default function PlayerDashboard() {
               {hasCredentials ? '¡Todo listo!' : 'Preparando tu cuenta'}
             </h2>
             <p className="text-gray-400 leading-relaxed max-w-xs mx-auto">
-              {hasCredentials 
-                ? 'Tus credenciales de acceso han sido generadas. Guárdalas para ingresar al casino.' 
+              {hasCredentials
+                ? 'Tus credenciales de acceso han sido generadas. Guárdalas para ingresar al casino.'
                 : 'Estamos configurando tu acceso exclusivo. Te notificaremos en cuanto tus credenciales estén listas.'}
             </p>
           </div>
@@ -304,7 +304,7 @@ export default function PlayerDashboard() {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <div className="group relative">
                     <span className="text-xs text-gray-500 block mb-1.5 ml-1">Usuario</span>
@@ -321,7 +321,7 @@ export default function PlayerDashboard() {
                       </button>
                     </div>
                   </div>
-                  
+
                   <div className="group relative">
                     <span className="text-xs text-gray-500 block mb-1.5 ml-1">Contraseña</span>
                     <div className="flex items-center gap-2">
@@ -340,7 +340,7 @@ export default function PlayerDashboard() {
                 </div>
 
                 {stats.platformUrl && (
-                  <a 
+                  <a
                     href={stats.platformUrl}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -385,16 +385,16 @@ export default function PlayerDashboard() {
             <span className="text-primary">CARGAR</span>FICHAS YA!
           </h1>
           <div className="flex gap-2">
-            <button 
-              onClick={() => setShowPasswordModal(true)} 
+            <button
+              onClick={() => setShowPasswordModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-white/5 text-gray-300 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-sm"
               title="Cambiar Contraseña"
             >
               <Lock className="w-4 h-4" />
               <span className="hidden md:inline">Clave</span>
             </button>
-            <button 
-              onClick={handleLogout} 
+            <button
+              onClick={handleLogout}
               className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all text-sm"
             >
               <LogOut className="w-4 h-4" />
@@ -408,7 +408,7 @@ export default function PlayerDashboard() {
           <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
             <Wallet className="w-32 h-32 text-primary" />
           </div>
-          
+
           <div className="flex flex-col md:flex-row justify-between items-center gap-8 relative z-10 mb-8">
             <div className="w-full md:w-auto text-center md:text-left space-y-2">
               <div className="flex items-center gap-3 justify-center md:justify-start">
@@ -527,7 +527,7 @@ export default function PlayerDashboard() {
               Ver Historial Completo <ExternalLink className="w-3 h-3" />
             </Link>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
@@ -546,11 +546,10 @@ export default function PlayerDashboard() {
                       {new Date(tx.createdAt).toLocaleDateString()}
                     </td>
                     <td className="py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
-                        tx.type === 'DEPOSIT' 
-                          ? 'bg-green-500/20 text-green-400 border border-green-500/20' 
-                          : 'bg-red-500/20 text-red-400 border border-red-500/20'
-                      }`}>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${tx.type === 'DEPOSIT'
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/20'
+                        : 'bg-red-500/20 text-red-400 border border-red-500/20'
+                        }`}>
                         {tx.type === 'DEPOSIT' ? <ArrowDownCircle className="w-3 h-3" /> : <ArrowUpCircle className="w-3 h-3" />}
                         {tx.type === 'DEPOSIT' ? 'Depósito' : 'Retiro'}
                       </span>
@@ -564,27 +563,26 @@ export default function PlayerDashboard() {
                       )}
                     </td>
                     <td className="py-4">
-                      <span className={`flex items-center gap-1.5 text-xs font-medium ${
-                        tx.status === 'COMPLETED' ? 'text-green-400' :
+                      <span className={`flex items-center gap-1.5 text-xs font-medium ${tx.status === 'COMPLETED' ? 'text-green-400' :
                         tx.status === 'REJECTED' ? 'text-red-400' : 'text-yellow-400'
-                      }`}>
-                        {tx.status === 'PENDING' ? <Clock className="w-3 h-3" /> : 
-                         tx.status === 'COMPLETED' ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                        {tx.status === 'PENDING' ? 'Pendiente' : 
-                         tx.status === 'COMPLETED' ? 'Completado' : 'Rechazado'}
+                        }`}>
+                        {tx.status === 'PENDING' ? <Clock className="w-3 h-3" /> :
+                          tx.status === 'COMPLETED' ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                        {tx.status === 'PENDING' ? 'Pendiente' :
+                          tx.status === 'COMPLETED' ? 'Completado' : 'Rechazado'}
                       </span>
                     </td>
                     <td className="py-4 pr-4 text-right">
                       <div className="flex gap-2 justify-end">
                         {tx.status === 'PENDING' && tx.type === 'DEPOSIT' ? (
-                           <button
-                             onClick={() => setSelectedTx(tx.id)}
-                             className="p-2 hover:bg-primary/20 rounded-lg text-primary hover:text-white transition-colors flex items-center gap-2"
-                             title="Continuar Pago"
-                           >
-                             <Wallet className="w-4 h-4" />
-                             <span className="text-xs font-bold hidden md:inline">Pagar</span>
-                           </button>
+                          <button
+                            onClick={() => setSelectedTx(tx.id)}
+                            className="p-2 hover:bg-primary/20 rounded-lg text-primary hover:text-white transition-colors flex items-center gap-2"
+                            title="Continuar Pago"
+                          >
+                            <Wallet className="w-4 h-4" />
+                            <span className="text-xs font-bold hidden md:inline">Pagar</span>
+                          </button>
                         ) : (
                           <button
                             onClick={() => setSelectedTx(tx.id)}
@@ -622,77 +620,77 @@ export default function PlayerDashboard() {
 
         {/* Provider Logos */}
         <div className="mb-12 text-center">
-           <h3 className="text-gray-500 text-xs uppercase tracking-[0.2em] mb-8 font-medium">Proveedores Oficiales</h3>
-           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-              <a href="https://www.pragmaticplay.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-primary transition-colors tracking-tight">PRAGMATIC PLAY</a>
-              <a href="https://rubyplay.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-red-500 transition-colors tracking-tight">RubyPlay</a>
-              <a href="https://www.evolution.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-blue-400 transition-colors tracking-tight">EVOLUTION</a>
-              <a href="https://www.playtech.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-blue-600 transition-colors tracking-tight">playtech</a>
-           </div>
+          <h3 className="text-gray-500 text-xs uppercase tracking-[0.2em] mb-8 font-medium">Proveedores Oficiales</h3>
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+            <a href="https://www.pragmaticplay.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-primary transition-colors tracking-tight">PRAGMATIC PLAY</a>
+            <a href="https://rubyplay.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-red-500 transition-colors tracking-tight">RubyPlay</a>
+            <a href="https://www.evolution.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-blue-400 transition-colors tracking-tight">EVOLUTION</a>
+            <a href="https://www.playtech.com" target="_blank" rel="noreferrer" className="text-white font-black text-2xl hover:text-blue-600 transition-colors tracking-tight">playtech</a>
+          </div>
         </div>
 
         {/* Security Modules */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-           <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
-                <ShieldCheck className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">Seguridad Total</h3>
-              <p className="text-gray-400 leading-relaxed">Garantía de anonimato absoluto y protección de datos con encriptación de grado militar.</p>
-           </div>
-           <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
-                <Zap className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">Pagos Flash</h3>
-              <p className="text-gray-400 leading-relaxed">Procesamiento instantáneo. Tus fichas se acreditan en segundos, sin esperas.</p>
-           </div>
-           <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
-                <Coins className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">Venta Optimizada</h3>
-              <p className="text-gray-400 leading-relaxed">Sistema inteligente de gestión de fichas para una experiencia de juego fluida.</p>
-           </div>
+          <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+              <ShieldCheck className="w-7 h-7 text-primary" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">Seguridad Total</h3>
+            <p className="text-gray-400 leading-relaxed">Garantía de anonimato absoluto y protección de datos con encriptación de grado militar.</p>
+          </div>
+          <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+              <Zap className="w-7 h-7 text-primary" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">Pagos Flash</h3>
+            <p className="text-gray-400 leading-relaxed">Procesamiento instantáneo. Tus fichas se acreditan en segundos, sin esperas.</p>
+          </div>
+          <div className="glass p-8 rounded-2xl border border-white/5 hover:border-primary/20 transition-all group hover:-translate-y-1 duration-300">
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+              <Coins className="w-7 h-7 text-primary" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">Venta Optimizada</h3>
+            <p className="text-gray-400 leading-relaxed">Sistema inteligente de gestión de fichas para una experiencia de juego fluida.</p>
+          </div>
         </div>
 
         {/* WhatsApp Quick Contact */}
         <div className="glass rounded-2xl p-8 md:p-12 text-center relative overflow-hidden mb-8">
-           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
-           <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
-           <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#25D366]/5 rounded-full blur-3xl"></div>
-           
-           <div className="relative z-10 max-w-lg mx-auto">
-             <h2 className="text-3xl font-black text-white mb-2">Atención Personalizada</h2>
-             <p className="text-gray-400 mb-8">Ingresa tu nombre y contáctanos directamente por WhatsApp para una carga rápida.</p>
-             
-             <div className="flex flex-col sm:flex-row gap-4">
-                <input 
-                  type="text" 
-                  placeholder="Tu Nombre" 
-                  id="wa-name"
-                  className="flex-1 bg-black/40 border border-white/10 rounded-xl p-4 text-white focus:border-primary focus:outline-none placeholder-gray-500 transition-colors"
-                />
-                <button 
-                  onClick={() => {
-                     const nameInput = document.getElementById('wa-name') as HTMLInputElement;
-                     const name = nameInput.value;
-                     if(!name) {
-                       nameInput.focus();
-                       nameInput.classList.add('border-red-500');
-                       setTimeout(() => nameInput.classList.remove('border-red-500'), 2000);
-                       return;
-                     }
-                     const msg = `Hola, soy ${name}. Quiero cargar fichas en mi cuenta!`;
-                     window.open(`https://wa.me/${adminWhatsapp || ''}?text=${encodeURIComponent(msg)}`, '_blank');
-                  }}
-                  className="px-8 py-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-bold text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] shadow-lg shadow-[#25D366]/20"
-                >
-                   <MessageCircle className="w-5 h-5" />
-                   <span>Contactar Ahora</span>
-                </button>
-             </div>
-           </div>
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent"></div>
+          <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+          <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#25D366]/5 rounded-full blur-3xl"></div>
+
+          <div className="relative z-10 max-w-lg mx-auto">
+            <h2 className="text-3xl font-black text-white mb-2">Atención Personalizada</h2>
+            <p className="text-gray-400 mb-8">Ingresa tu nombre y contáctanos directamente por WhatsApp para una carga rápida.</p>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <input
+                type="text"
+                placeholder="Tu Nombre"
+                id="wa-name"
+                className="flex-1 bg-black/40 border border-white/10 rounded-xl p-4 text-white focus:border-primary focus:outline-none placeholder-gray-500 transition-colors"
+              />
+              <button
+                onClick={() => {
+                  const nameInput = document.getElementById('wa-name') as HTMLInputElement;
+                  const name = nameInput.value;
+                  if (!name) {
+                    nameInput.focus();
+                    nameInput.classList.add('border-red-500');
+                    setTimeout(() => nameInput.classList.remove('border-red-500'), 2000);
+                    return;
+                  }
+                  const msg = `Hola, soy ${name}. Quiero cargar fichas en mi cuenta!`;
+                  window.open(`https://wa.me/${adminWhatsapp || ''}?text=${encodeURIComponent(msg)}`, '_blank');
+                }}
+                className="px-8 py-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-black font-bold text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] shadow-lg shadow-[#25D366]/20"
+              >
+                <MessageCircle className="w-5 h-5" />
+                <span>Contactar Ahora</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Modals */}
@@ -718,21 +716,21 @@ export default function PlayerDashboard() {
                     placeholder="CVU / CBU"
                     className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
                     value={withdrawDetails.cvu}
-                    onChange={(e) => setWithdrawDetails({...withdrawDetails, cvu: e.target.value})}
+                    onChange={(e) => setWithdrawDetails({ ...withdrawDetails, cvu: e.target.value })}
                   />
                   <input
                     type="text"
                     placeholder="Alias"
                     className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
                     value={withdrawDetails.alias}
-                    onChange={(e) => setWithdrawDetails({...withdrawDetails, alias: e.target.value})}
+                    onChange={(e) => setWithdrawDetails({ ...withdrawDetails, alias: e.target.value })}
                   />
                   <input
                     type="text"
                     placeholder="Nombre del Banco / Billetera"
                     className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
                     value={withdrawDetails.bank}
-                    onChange={(e) => setWithdrawDetails({...withdrawDetails, bank: e.target.value})}
+                    onChange={(e) => setWithdrawDetails({ ...withdrawDetails, bank: e.target.value })}
                   />
                 </div>
               )}
@@ -763,13 +761,13 @@ export default function PlayerDashboard() {
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="w-full max-w-6xl glass rounded-2xl overflow-hidden flex flex-col h-[85vh] border border-white/10 shadow-2xl">
               <div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/20 shrink-0">
-                 <h3 className="font-bold text-white flex items-center gap-2">
-                    <MessageCircle className="w-4 h-4 text-primary" />
-                    Detalles de la Operación
-                 </h3>
-                 <button onClick={() => setSelectedTx(null)} className="text-gray-400 hover:text-white transition-colors">✕</button>
+                <h3 className="font-bold text-white flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-primary" />
+                  Detalles de la Operación
+                </h3>
+                <button onClick={() => setSelectedTx(null)} className="text-gray-400 hover:text-white transition-colors">✕</button>
               </div>
-              
+
               <div className="flex-1 overflow-hidden flex flex-col lg:grid lg:grid-cols-2">
                 {/* Left Column: Details */}
                 <div className="p-6 overflow-y-auto border-r border-white/10 bg-black/20 space-y-6 max-h-[35vh] lg:max-h-full shrink-0">
@@ -779,23 +777,18 @@ export default function PlayerDashboard() {
                       <div className="flex bg-white/5 p-1 rounded-xl mb-6">
                         <button
                           onClick={() => setPaymentMethod('TRANSFER')}
-                          className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
-                            paymentMethod === 'TRANSFER' 
-                              ? 'bg-primary text-black shadow-lg shadow-primary/20' 
-                              : 'text-gray-400 hover:text-white'
-                          }`}
+                          className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${paymentMethod === 'TRANSFER'
+                            ? 'bg-primary text-black shadow-lg shadow-primary/20'
+                            : 'text-gray-400 hover:text-white'
+                            }`}
                         >
                           Transferencia
                         </button>
                         <button
-                          onClick={() => setPaymentMethod('MP')}
-                          className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
-                            paymentMethod === 'MP' 
-                              ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' 
-                              : 'text-gray-400 hover:text-white'
-                          }`}
+                          disabled
+                          className="flex-1 py-2 rounded-lg text-xs font-bold transition-all text-gray-500 cursor-not-allowed border border-white/5 opacity-50"
                         >
-                          MercadoPago
+                          MercadoPago (PRÓXIMAMENTE)
                         </button>
                       </div>
 
@@ -808,13 +801,10 @@ export default function PlayerDashboard() {
                             </p>
                             <p className="text-gray-300 text-lg">Transfiere EXACTAMENTE:</p>
                             <p className="text-4xl font-black text-white text-glow my-3 tracking-tight">
-                              ${selectedTransactionData.expectedAmount ? selectedTransactionData.expectedAmount.toFixed(2) : selectedTransactionData.amount.toLocaleString()}
-                            </p>
-                            <p className="text-gray-400 text-sm">
-                              El monto incluye centavos únicos para identificar tu pago. Se acreditará automáticamente en segundos.
+                              ${selectedTransactionData.amount.toLocaleString()}
                             </p>
                           </div>
-    
+
                           <div className="space-y-4">
                             <h4 className="text-white font-bold flex items-center gap-2">
                               <Wallet className="w-4 h-4 text-primary" />
@@ -822,82 +812,106 @@ export default function PlayerDashboard() {
                             </h4>
                             {activeCvus.length > 0 ? (
                               activeCvus.map((cvu: any) => (
-                                <div key={cvu.id} className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-3 hover:bg-white/10 transition-colors">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <div className="p-2 rounded-lg bg-primary/20 text-primary">
-                                      <Wallet className="w-4 h-4" />
+                                <div
+                                  key={cvu.id}
+                                  className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-3 hover:bg-white/10 transition-all group cursor-pointer active:scale-[0.98]"
+                                  onClick={() => {
+                                    const text = `Banco: ${cvu.bankName}\nTitular: ${cvu.holderName || ''}\nCVU: ${cvu.cbu}\nAlias: ${cvu.alias}`;
+                                    handleCopy(text, 'url');
+                                    alert('Datos de cuenta copiados al portapapeles');
+                                  }}
+                                >
+                                  <div className="flex justify-between items-center mb-2">
+                                    <div className="flex items-center gap-2">
+                                      <div className="p-2 rounded-lg bg-primary/20 text-primary">
+                                        <Wallet className="w-4 h-4" />
+                                      </div>
+                                      <span className="font-bold text-white">{cvu.bankName}</span>
                                     </div>
-                                    <span className="font-bold text-white">{cvu.bankName}</span>
+                                    <span className="text-[10px] text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                      Hacer clic para copiar todos los datos
+                                    </span>
                                   </div>
-                                  
+
                                   <div className="space-y-2 text-sm">
                                     {cvu.holderName && (
-                                      <div className="flex justify-between items-center py-1 border-b border-white/5">
+                                      <div className="flex justify-between items-center py-1 border-b border-white/5 group/field" onClick={(e) => { e.stopPropagation(); handleCopy(cvu.holderName, 'user'); }}>
                                         <span className="text-gray-400">Titular:</span>
-                                        <span className="text-white font-mono select-all text-right">{cvu.holderName}</span>
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-white font-mono select-all text-right">{cvu.holderName}</span>
+                                          <Copy className="w-3 h-3 text-gray-500 group-hover/field:text-primary transition-colors" />
+                                        </div>
                                       </div>
                                     )}
-                                    <div className="flex justify-between items-center py-1 border-b border-white/5">
+                                    <div className="flex justify-between items-center py-1 border-b border-white/5 group/field" onClick={(e) => { e.stopPropagation(); handleCopy(cvu.cbu, 'user'); }}>
                                       <span className="text-gray-400">CBU/CVU:</span>
-                                      <span className="text-white font-mono select-all text-right">{cvu.cbu}</span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-white font-mono select-all text-right">{cvu.cbu}</span>
+                                        <Copy className="w-3 h-3 text-gray-500 group-hover/field:text-primary transition-colors" />
+                                      </div>
                                     </div>
-                                    <div className="flex justify-between items-center py-1">
+                                    <div className="flex justify-between items-center py-1 group/field" onClick={(e) => { e.stopPropagation(); handleCopy(cvu.alias, 'user'); }}>
                                       <span className="text-gray-400">Alias:</span>
-                                      <span className="text-white font-mono select-all text-right">{cvu.alias}</span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-white font-mono select-all text-right">{cvu.alias}</span>
+                                        <Copy className="w-3 h-3 text-gray-500 group-hover/field:text-primary transition-colors" />
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
                               ))
                             ) : (
-                              <div className="text-center p-4 bg-white/5 rounded-xl border border-dashed border-white/10 text-gray-500">
-                                No hay cuentas activas disponibles. Consulta por el chat.
+                              <div className="text-center p-8 bg-white/5 rounded-xl border border-dashed border-white/10 text-gray-500">
+                                <CreditCard className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                                <p>No hay cuentas activas disponibles.</p>
+                                <p className="text-xs mt-1">Por favor, consulta con soporte por el chat.</p>
                               </div>
                             )}
                           </div>
                         </>
                       ) : (
                         <div className="space-y-6 text-center">
-                            <div className="bg-blue-500/10 p-8 rounded-xl border border-blue-500/20">
-                               <h4 className="text-xl font-bold text-blue-400 mb-4">Pagar con MercadoPago</h4>
-                               <p className="text-gray-300 mb-6">
-                                 Haz clic en el botón para abrir la pasarela de pago segura de MercadoPago.
-                                 El pago se acreditará automáticamente.
-                               </p>
-                               
-                               {!mpLink ? (
-                                  <button 
-                                    onClick={handleCreatePreference}
-                                    disabled={loadingMp}
-                                    className="w-full py-4 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2"
-                                  >
-                                    {loadingMp ? (
-                                      <>
-                                        <RefreshCw className="w-5 h-5 animate-spin" />
-                                        Generando link...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Wallet className="w-5 h-5" />
-                                        Generar Link de Pago
-                                      </>
-                                    )}
-                                  </button>
-                               ) : (
-                                  <div className="space-y-4">
-                                     <a 
-                                       href={mpLink}
-                                       target="_blank"
-                                       rel="noopener noreferrer"
-                                       className="block w-full py-4 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
-                                     >
-                                        Pagar Ahora
-                                     </a>
-                                     <p className="text-xs text-gray-500">
-                                       Si no se abrió automáticamente, haz clic arriba.
-                                     </p>
-                                  </div>
-                               )}
-                            </div>
+                          <div className="bg-blue-500/10 p-8 rounded-xl border border-blue-500/20">
+                            <h4 className="text-xl font-bold text-blue-400 mb-4">Pagar con MercadoPago</h4>
+                            <p className="text-gray-300 mb-6">
+                              Haz clic en el botón para abrir la pasarela de pago segura de MercadoPago.
+                              El pago se acreditará automáticamente.
+                            </p>
+
+                            {!mpLink ? (
+                              <button
+                                onClick={handleCreatePreference}
+                                disabled={loadingMp}
+                                className="w-full py-4 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2"
+                              >
+                                {loadingMp ? (
+                                  <>
+                                    <RefreshCw className="w-5 h-5 animate-spin" />
+                                    Generando link...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Wallet className="w-5 h-5" />
+                                    Generar Link de Pago
+                                  </>
+                                )}
+                              </button>
+                            ) : (
+                              <div className="space-y-4">
+                                <a
+                                  href={mpLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block w-full py-4 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+                                >
+                                  Pagar Ahora
+                                </a>
+                                <p className="text-xs text-gray-500">
+                                  Si no se abrió automáticamente, haz clic arriba.
+                                </p>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </>
@@ -910,68 +924,66 @@ export default function PlayerDashboard() {
                         Solicitud de Retiro en Proceso
                       </p>
                       <p className="text-gray-300 mb-4">Tu solicitud ha sido enviada al administrador. Por favor espera la confirmación en el chat.</p>
-                      
+
                       <div className="bg-black/20 p-4 rounded-xl space-y-3 border border-white/5">
-                         <div className="flex justify-between">
-                            <span className="text-gray-400">Monto a recibir:</span>
-                            <span className="text-white font-bold text-lg">${selectedTransactionData.amount.toLocaleString()}</span>
-                         </div>
-                         <div className="border-t border-white/10 my-2"></div>
-                         {selectedTransactionData.withdrawalCvu && (
-                            <div className="flex justify-between text-sm">
-                               <span className="text-gray-400">CVU Destino:</span>
-                               <span className="text-white">{selectedTransactionData.withdrawalCvu}</span>
-                            </div>
-                         )}
-                         {selectedTransactionData.withdrawalAlias && (
-                            <div className="flex justify-between text-sm">
-                               <span className="text-gray-400">Alias:</span>
-                               <span className="text-white">{selectedTransactionData.withdrawalAlias}</span>
-                            </div>
-                         )}
-                         {selectedTransactionData.withdrawalBank && (
-                            <div className="flex justify-between text-sm">
-                               <span className="text-gray-400">Banco:</span>
-                               <span className="text-white">{selectedTransactionData.withdrawalBank}</span>
-                            </div>
-                         )}
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Monto a recibir:</span>
+                          <span className="text-white font-bold text-lg">${selectedTransactionData.amount.toLocaleString()}</span>
+                        </div>
+                        <div className="border-t border-white/10 my-2"></div>
+                        {selectedTransactionData.withdrawalCvu && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-400">CVU Destino:</span>
+                            <span className="text-white">{selectedTransactionData.withdrawalCvu}</span>
+                          </div>
+                        )}
+                        {selectedTransactionData.withdrawalAlias && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-400">Alias:</span>
+                            <span className="text-white">{selectedTransactionData.withdrawalAlias}</span>
+                          </div>
+                        )}
+                        {selectedTransactionData.withdrawalBank && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-400">Banco:</span>
+                            <span className="text-white">{selectedTransactionData.withdrawalBank}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
 
                   {selectedTransactionData?.status !== 'PENDING' && (
-                    <div className={`p-6 rounded-xl border ${
-                      selectedTransactionData?.status === 'COMPLETED' 
-                        ? 'bg-green-500/10 border-green-500/20' 
-                        : 'bg-red-500/10 border-red-500/20'
-                    }`}>
-                      <p className={`font-bold mb-2 flex items-center gap-2 text-lg ${
-                        selectedTransactionData?.status === 'COMPLETED' ? 'text-green-500' : 'text-red-500'
+                    <div className={`p-6 rounded-xl border ${selectedTransactionData?.status === 'COMPLETED'
+                      ? 'bg-green-500/10 border-green-500/20'
+                      : 'bg-red-500/10 border-red-500/20'
                       }`}>
+                      <p className={`font-bold mb-2 flex items-center gap-2 text-lg ${selectedTransactionData?.status === 'COMPLETED' ? 'text-green-500' : 'text-red-500'
+                        }`}>
                         {selectedTransactionData?.status === 'COMPLETED' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
                         {selectedTransactionData?.status === 'COMPLETED' ? 'Operación Completada' : 'Operación Rechazada'}
                       </p>
                       <p className="text-gray-300 mb-4">
-                        {selectedTransactionData?.status === 'COMPLETED' 
-                          ? 'Esta operación ya fue procesada y finalizada.' 
+                        {selectedTransactionData?.status === 'COMPLETED'
+                          ? 'Esta operación ya fue procesada y finalizada.'
                           : 'Esta operación fue rechazada por el administrador.'}
                       </p>
 
                       <div className="bg-black/20 p-4 rounded-xl space-y-3 border border-white/5">
-                         <div className="flex justify-between">
-                            <span className="text-gray-400">Tipo:</span>
-                            <span className="text-white font-bold">
-                              {selectedTransactionData?.type === 'DEPOSIT' ? 'Depósito' : 'Retiro'}
-                            </span>
-                         </div>
-                         <div className="flex justify-between">
-                            <span className="text-gray-400">Monto:</span>
-                            <span className="text-white font-bold text-lg">${selectedTransactionData?.amount.toLocaleString()}</span>
-                         </div>
-                         <div className="flex justify-between">
-                            <span className="text-gray-400">Fecha:</span>
-                            <span className="text-white">{selectedTransactionData?.createdAt ? new Date(selectedTransactionData.createdAt).toLocaleString() : ''}</span>
-                         </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Tipo:</span>
+                          <span className="text-white font-bold">
+                            {selectedTransactionData?.type === 'DEPOSIT' ? 'Depósito' : 'Retiro'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Monto:</span>
+                          <span className="text-white font-bold text-lg">${selectedTransactionData?.amount.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Fecha:</span>
+                          <span className="text-white">{selectedTransactionData?.createdAt ? new Date(selectedTransactionData.createdAt).toLocaleString() : ''}</span>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1005,7 +1017,7 @@ export default function PlayerDashboard() {
                   <XCircle className="w-6 h-6" />
                 </button>
               </div>
-              
+
               <form onSubmit={handleChangePassword} className="space-y-4">
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Usuario</label>
@@ -1023,7 +1035,7 @@ export default function PlayerDashboard() {
                     required
                     minLength={6}
                     value={passwordForm.password}
-                    onChange={(e) => setPasswordForm({...passwordForm, password: e.target.value})}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, password: e.target.value })}
                     className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
                     placeholder="Mínimo 6 caracteres"
                   />
@@ -1035,7 +1047,7 @@ export default function PlayerDashboard() {
                     required
                     minLength={6}
                     value={passwordForm.confirmPassword}
-                    onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
                     className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
                     placeholder="Repite la contraseña"
                   />
