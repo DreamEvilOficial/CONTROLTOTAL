@@ -3,7 +3,6 @@ import prisma from '@/lib/prisma';
 import { verifyJWT } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
-import { sendTelegramMessage } from '@/lib/telegram';
 
 const transactionSchema = z.object({
   amount: z.number().positive(),
@@ -131,18 +130,6 @@ export async function POST(request: Request) {
       } as any,
     });
 
-    // Enviar notificación por Telegram
-    const emoji = type === 'DEPOSIT' ? '📥' : '📤';
-    const amountStr = expectedAmount ? expectedAmount.toFixed(2) : amount.toLocaleString();
-    const msg = `
-<b>${emoji} Nueva Petición de ${type === 'DEPOSIT' ? 'CARGA' : 'RETIRO'}</b>
-<b>Usuario:</b> ${user.username}
-<b>Monto:</b> $${amountStr}
-<b>Plataforma:</b> ${user.platform?.name || 'N/A'}
-${type === 'DEPOSIT' ? 'Por favor revisa el panel para confirmar.' : 'Datos de retiro disponibles en el panel.'}
-    `.trim();
-
-    await sendTelegramMessage(msg);
 
     console.log(`[TRANSACTION CREATED] ID: ${transaction.id}, User: ${user.username}, Amount: ${amount}, Type: ${type}, Method: ${method || 'N/A'}, Expected: ${expectedAmount}`);
 

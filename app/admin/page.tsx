@@ -110,8 +110,6 @@ interface Config {
   whatsappNumber: string;
   mpAccessToken: string;
   mpPublicKey: string;
-  telegramBotToken: string;
-  telegramChatId: string;
 }
 
 interface Platform {
@@ -130,7 +128,7 @@ export default function AdminDashboard() {
   const [activity, setActivity] = useState<ActivityData | null>(null);
   const [cvus, setCvus] = useState<Cvu[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [config, setConfig] = useState<Config>({ whatsappNumber: '', mpAccessToken: '', mpPublicKey: '', telegramBotToken: '', telegramChatId: '' });
+  const [config, setConfig] = useState<Config>({ whatsappNumber: '', mpAccessToken: '', mpPublicKey: '' });
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [newUsersCount, setNewUsersCount] = useState(0);
   const [newTxCount, setNewTxCount] = useState(0);
@@ -303,8 +301,6 @@ export default function AdminDashboard() {
           whatsappNumber: data.whatsappNumber || '',
           mpAccessToken: data.mpAccessToken || '',
           mpPublicKey: data.mpPublicKey || '',
-          telegramBotToken: data.telegramBotToken || '',
-          telegramChatId: data.telegramChatId || '',
         });
       }
     } catch (error) {
@@ -1381,31 +1377,6 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="border-t border-white/10 pt-6">
-                  <h4 className="text-lg font-bold mb-4 text-primary">Notificaciones Telegram</h4>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm text-gray-400 mb-1 block">Bot Token</label>
-                      <input
-                        type="password"
-                        value={config.telegramBotToken}
-                        onChange={(e) => setConfig({ ...config, telegramBotToken: e.target.value })}
-                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
-                        placeholder="123456789:ABC..."
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-400 mb-1 block">Chat ID (Grupo de Admin)</label>
-                      <input
-                        type="text"
-                        value={config.telegramChatId}
-                        onChange={(e) => setConfig({ ...config, telegramChatId: e.target.value })}
-                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-primary/50 outline-none"
-                        placeholder="-100..."
-                      />
-                    </div>
-                  </div>
-                </div>
 
                 <button
                   type="submit"

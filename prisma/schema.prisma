@@ -64,8 +64,6 @@ model SystemConfig {
   metaAdAccountId String?
   metaPageId      String?
   metaPixelId     String?
-  telegramBotToken String?
-  telegramChatId   String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
