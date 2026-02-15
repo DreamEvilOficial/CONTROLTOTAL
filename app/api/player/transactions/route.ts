@@ -102,7 +102,8 @@ export async function POST(request: Request) {
             status: 'PENDING',
             type: 'DEPOSIT',
             expectedAmount: candidate
-          }
+          },
+          select: { id: true }
         });
 
         if (!existing) {
