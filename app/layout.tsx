@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -49,7 +50,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="dark">
-      <body className={`${inter.className} min-h-screen bg-background text-foreground`}>{children}</body>
+      <body className={`${inter.className} min-h-screen bg-background text-foreground`}>
+        {children}
+        <ServiceWorkerRegistrar />
+      </body>
     </html>
   );
 }
