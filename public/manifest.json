@@ -1,0 +1,28 @@
+{
+  "name": "CargarFichasYA!",
+  "short_name": "CargarFichasYA!",
+  "description": "Gestiona tus fichas - carga y administra tus fichas fácilmente.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Cargar Fichas",
+      "short_name": "Cargar",
+      "description": "Abrir la sección de depósito",
+      "url": "/player"
+    }
+  ]
+}
