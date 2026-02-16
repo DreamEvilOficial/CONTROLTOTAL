@@ -4,25 +4,24 @@ import { ShieldCheck, Coins, LayoutDashboard } from 'lucide-react';
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Background Effects */}
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4 pt-16 pb-10">
       <div className="absolute top-0 left-0 w-full h-full bg-[url('/noise.png')] opacity-5 pointer-events-none"></div>
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
       <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
 
-      <main className="z-10 text-center max-w-4xl px-4">
+      <main className="z-10 text-center max-w-4xl w-full">
         <div className="flex justify-center mb-8">
           <div className="p-4 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm box-glow">
             <Coins className="w-16 h-16 text-secondary animate-bounce" />
           </div>
         </div>
 
-        <h1 className="text-6xl md:text-8xl font-black mb-6 tracking-tight">
+        <h1 className="text-4xl sm:text-5xl md:text-7xl font-black mb-6 tracking-tight">
           <span className="text-white text-glow">CargarFichas</span>
           <span className="text-primary ml-4 text-glow">YA</span>
         </h1>
         
-        <p className="text-xl md:text-2xl mb-12 text-gray-300 font-light max-w-2xl mx-auto leading-relaxed">
+        <p className="text-base sm:text-lg md:text-2xl mb-10 text-gray-300 font-light max-w-2xl mx-auto leading-relaxed">
           Gestión integral para operadores de juego. 
           <span className="text-secondary font-medium"> Potencia tu negocio</span> con nuestra suite de administración.
         </p>

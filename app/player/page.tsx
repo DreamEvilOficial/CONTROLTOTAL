@@ -43,6 +43,7 @@ export default function PlayerDashboard() {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [newLink, setNewLink] = useState('');
   const [showOutcomeModal, setShowOutcomeModal] = useState<any>(null);
+  const [showSupportChatMobile, setShowSupportChatMobile] = useState(false);
 
   const handleCopy = (text: string, type: 'user' | 'pass' | 'url') => {
     navigator.clipboard.writeText(text);
@@ -547,8 +548,7 @@ export default function PlayerDashboard() {
           )}
         </div>
 
-        {/* Active Petitions */}
-        <div className="glass rounded-2xl p-6 md:p-8 mb-12">
+        <div className="glass rounded-2xl p-4 sm:p-6 md:p-8 mb-12">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <Clock className="w-6 h-6 text-primary" />
@@ -560,23 +560,23 @@ export default function PlayerDashboard() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left text-xs sm:text-sm">
               <thead>
-                <tr className="border-b border-white/10 text-gray-400 text-sm">
-                  <th className="pb-4 pl-4">Fecha</th>
-                  <th className="pb-4">Tipo</th>
-                  <th className="pb-4">Monto</th>
-                  <th className="pb-4">Estado</th>
-                  <th className="pb-4 pr-4 text-right">Acciones</th>
+                <tr className="border-b border-white/10 text-gray-400">
+                  <th className="pb-3 pl-3 sm:pb-4 sm:pl-4 whitespace-nowrap">Fecha</th>
+                  <th className="pb-3 sm:pb-4 whitespace-nowrap">Tipo</th>
+                  <th className="pb-3 sm:pb-4 whitespace-nowrap">Monto</th>
+                  <th className="pb-3 sm:pb-4 whitespace-nowrap">Estado</th>
+                  <th className="pb-3 pr-3 sm:pb-4 sm:pr-4 text-right whitespace-nowrap">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="text-sm">
+              <tbody>
                 {transactions.filter(tx => tx.status === 'PENDING').map((tx) => (
                   <tr key={tx.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                    <td className="py-4 pl-4 text-gray-300">
+                    <td className="py-3 pl-3 sm:py-4 sm:pl-4 text-gray-300 whitespace-nowrap">
                       {new Date(tx.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="py-4">
+                    <td className="py-3 sm:py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${tx.type === 'DEPOSIT'
                         ? 'bg-green-500/20 text-green-400 border border-green-500/20'
                         : 'bg-red-500/20 text-red-400 border border-red-500/20'
@@ -585,7 +585,7 @@ export default function PlayerDashboard() {
                         {tx.type === 'DEPOSIT' ? 'Depósito' : 'Retiro'}
                       </span>
                     </td>
-                    <td className="py-4 font-bold text-white">
+                    <td className="py-3 sm:py-4 font-bold text-white">
                       ${tx.amount.toLocaleString()}
                       {tx.expectedAmount && tx.status === 'PENDING' && (
                         <div className="text-xs text-secondary font-mono mt-1 flex items-center gap-1">
@@ -593,7 +593,7 @@ export default function PlayerDashboard() {
                         </div>
                       )}
                     </td>
-                    <td className="py-4">
+                    <td className="py-3 sm:py-4">
                       <span className={`flex items-center gap-1.5 text-xs font-medium ${tx.status === 'COMPLETED' ? 'text-green-400' :
                         tx.status === 'REJECTED' ? 'text-red-400' : 'text-yellow-400'
                         }`}>
@@ -603,8 +603,8 @@ export default function PlayerDashboard() {
                           tx.status === 'COMPLETED' ? 'Completado' : 'Rechazado'}
                       </span>
                     </td>
-                    <td className="py-4 pr-4 text-right">
-                      <div className="flex gap-2 justify-end">
+                    <td className="py-3 pr-3 sm:py-4 sm:pr-4 text-right">
+                      <div className="flex gap-1 sm:gap-2 justify-end">
                         {tx.status === 'PENDING' && tx.type === 'DEPOSIT' ? (
                           <button
                             onClick={() => setSelectedTx(tx.id)}
@@ -612,7 +612,7 @@ export default function PlayerDashboard() {
                             title="Continuar Pago"
                           >
                             <Wallet className="w-4 h-4" />
-                            <span className="text-xs font-bold hidden md:inline">Pagar</span>
+                            <span className="text-[10px] sm:text-xs font-bold hidden md:inline">Pagar</span>
                           </button>
                         ) : (
                           <button
@@ -724,7 +724,6 @@ export default function PlayerDashboard() {
           </div>
         </div>
 
-        {/* Modals */}
         {(showDepositModal || showWithdrawModal) && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="glass rounded-2xl p-8 w-full max-w-md border border-white/10 relative">
@@ -800,8 +799,7 @@ export default function PlayerDashboard() {
               </div>
 
               <div className="flex-1 overflow-hidden flex flex-col lg:grid lg:grid-cols-2">
-                {/* Left Column: Details */}
-                <div className="p-6 overflow-y-auto border-r border-white/10 bg-black/20 space-y-6 max-h-[35vh] lg:max-h-full shrink-0">
+                <div className="p-4 sm:p-6 overflow-y-auto border-b lg:border-b-0 lg:border-r border-white/10 bg-black/20 space-y-6 max-h-[55vh] lg:max-h-full shrink-0">
                   {selectedTransactionData?.type === 'DEPOSIT' && selectedTransactionData.status === 'PENDING' && (
                     <>
                       {/* Payment Method Selector */}
@@ -950,7 +948,19 @@ export default function PlayerDashboard() {
                           </div>
                         </div>
                       )}
-                    </>
+                    <>
+                  )}
+
+                  {selectedTransactionData && (
+                    <div className="mt-4 lg:hidden">
+                      <button
+                        onClick={() => setShowSupportChatMobile(true)}
+                        className="w-full py-3 rounded-xl bg-primary hover:bg-primary/90 text-black font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        Abrir chat con soporte
+                      </button>
+                    </div>
                   )}
 
                   {selectedTransactionData?.type === 'WITHDRAW' && selectedTransactionData.status === 'PENDING' && (
@@ -1025,8 +1035,7 @@ export default function PlayerDashboard() {
                   )}
                 </div>
 
-                {/* Right Column: Chat */}
-                <div className="flex flex-col flex-1 lg:h-full bg-black/40 border-l border-white/10 min-h-0">
+                <div className="hidden lg:flex flex-col flex-1 lg:h-full bg-black/40 border-l border-white/10 min-h-0">
                   <div className="flex-1 overflow-hidden">
                     <ChatWindow
                       transactionId={selectedTx}
@@ -1036,6 +1045,33 @@ export default function PlayerDashboard() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {showSupportChatMobile && selectedTx && (
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex flex-col p-3 z-50 lg:hidden">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2 text-white font-bold text-sm">
+                <MessageCircle className="w-4 h-4 text-primary" />
+                <span>Chat con Soporte</span>
+              </div>
+              <button
+                onClick={() => setShowSupportChatMobile(false)}
+                className="text-gray-400 hover:text-white text-sm px-3 py-1 rounded-lg bg-white/5"
+              >
+                Cerrar
+              </button>
+            </div>
+            <div className="flex-1 min-h-0 rounded-2xl overflow-hidden border border-white/10 bg-black/60">
+              <ChatWindow
+                transactionId={selectedTx}
+                currentUserRole="PLAYER"
+                onClose={() => {
+                  setShowSupportChatMobile(false);
+                  setSelectedTx(null);
+                }}
+              />
             </div>
           </div>
         )}

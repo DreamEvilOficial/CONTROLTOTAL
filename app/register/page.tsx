@@ -107,15 +107,13 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#050505]">
-      {/* Background Effects */}
       <div className="absolute top-0 left-0 w-full h-full bg-[url('/noise.png')] opacity-5 pointer-events-none"></div>
       <div className="absolute top-1/4 -right-20 w-80 h-80 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
       <div className="absolute bottom-1/4 -left-20 w-80 h-80 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-700"></div>
 
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 z-10">
 
-        {/* Left Column: Form */}
-        <div className="glass rounded-2xl shadow-2xl p-8 border border-white/10">
+        <div className="glass rounded-2xl shadow-2xl p-6 sm:p-8 border border-white/10">
           <div className="mb-8">
             <h2 className="text-3xl font-black text-white mb-2 tracking-tight">Crear Cuenta</h2>
             <p className="text-gray-400">Únete a nosotros y empieza a ganar</p>
@@ -200,6 +198,23 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            {platforms.length > 0 && (
+              <div className="space-y-2 md:hidden">
+                <label className="text-sm font-medium text-gray-300 ml-1">Plataforma</label>
+                <select
+                  className="w-full bg-black/20 border border-white/10 rounded-xl text-white px-4 py-3 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-sm"
+                  value={formData.platformId}
+                  onChange={(e) => setFormData({ ...formData, platformId: e.target.value })}
+                >
+                  {platforms.map((platform) => (
+                    <option key={platform.id} value={platform.id}>
+                      {platform.name} • {platform.bonus}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
@@ -223,8 +238,7 @@ export default function RegisterPage() {
           </form>
         </div>
 
-        {/* Right Column: Platform Selection */}
-        <div className="space-y-6">
+        <div className="space-y-6 hidden md:block">
           <div className="glass rounded-2xl p-6 border border-white/10">
             <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
               <Gamepad2 className="w-5 h-5 text-primary" />
