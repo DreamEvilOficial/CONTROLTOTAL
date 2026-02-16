@@ -1,0 +1,11 @@
+{
+  "manifest": "https://cargarfichasya.vercel.app/manifest.json",
+  "package": "com.example.cargarfichasya",
+  "name": "CargarFichasYA",
+  "publisher": "YOUR PUBLISHER NAME",
+  "launcherName": "CargarFichasYA",
+  "host": "cargarfichasya.vercel.app",
+  "sha256CertFingerprint": "AA:BB:CC:...:FF",
+  "display": "standalone",
+  "enableNotifications": false
+}
